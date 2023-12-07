@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from spatialmath import SE3
 import matplotlib.animation as animation
 
+##### set closed loop manipulator ################################################################
+
 # L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
 # L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,2],[0,0,1]]))
 # L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
@@ -16,10 +18,6 @@ L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
 
 Robot = closedLoopMani([L1,L2,L4,L5])
 
-q = [2.1267784793154387]
-mode = "positive"
-output = Robot.fk(q,'d',mode)
-
 # L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
 # L2 = link('B','input',np.array(['a','e','g']),np.array([[0,4,2],[0,0,1]]))
 # L3 = link('C','input',np.array(['b','c','f']),np.array([[0,4,2],[0,0,-1]]))
@@ -28,31 +26,29 @@ output = Robot.fk(q,'d',mode)
 
 # Robot = closedLoopMani([L1,L2,L3,L4,L5])
 
+###################################################################################################
+##### forward kinematic of Robot ##################################################################
+q = [2.1267784793154387]
+mode = "positive"
+output = Robot.fk(q,'d',mode)
+
 # q = [np.pi/2+np.pi/6,np.pi/2-np.pi/6]
 # mode = "positive"
 # output = Robot.fk([np.pi/2+np.pi/6,np.pi/2-np.pi/6],'d','positive')
 print(output)
 
-
-# plt.figure(figsize=(6, 6))
+plt.figure(figsize=(6, 6))
 # plt.grid(True)
 
 bound = Robot.boundary4()
-# print(bound)
-
-# fig, ax = plt.subplots()
-# bound = Robot.boundary4()
-# q = np.linspace(bound[0], bound[1], 40)
-# Robot_animate = Robot.plot([bound[0]],"positive")
-# print("Robot animate : ",Robot.plot([bound[0]],"positive"))
-
-
-plt.figure(figsize=(6, 6))
-# plt.grid(True)
+print(bound)
 
 Robot.plot([bound[0]],"positive")
 Robot.plot([bound[1]],"positive")
 
-Robot.animationfk4(100, "positive",[-10,10],[-10,10])
+Robot.animationfk(100, "positive",[-10,10],[-10,10])
 plt.show()
 
+T_desired = [2,2]
+q_sol = Robot.ik(T_desired,'d')
+print("q_sol = ",q_sol)

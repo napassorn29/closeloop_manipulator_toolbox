@@ -374,11 +374,11 @@ class closedLoopMani():
         y_sorted += (y_sorted[0],)
 
         # Plotting the non-intersecting polygon
-        plt.axis('equal')
         plt.plot(x_sorted, y_sorted)
         
     def plot(self,q:list,mode:str):
         plt.grid(True)
+        plt.axis('equal')
         posFilter = np.array([[0],[0],[0],[1]])
         for Link in self.links:
             jointCoor = []
@@ -423,4 +423,16 @@ class closedLoopMani():
         animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
         plt.show()
         
- 
+    def animationik(self, frequency:int, mode:str, xlim:list, ylim:list):
+        if self.nlinks == 4:
+            return self.__animationfk4(frequency, mode, xlim, ylim)
+        # if self.nlinks == 5:
+            # return self.__fk5(q, outputJoint)
+    
+    def __animationik4(self, frequency:int, mode:str, xlim:list, ylim:list):
+        fig, ax = plt.subplots()
+        bound = self.boundary4()
+        q_values = np.linspace(bound[1],bound[0], frequency)
+        posFilter = np.array([[0], [0], [0], [1]])
+        
+        ax.set_xlim(xlim[0], xlim[1])  # set x-axis limits

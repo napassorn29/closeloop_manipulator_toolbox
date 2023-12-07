@@ -377,7 +377,7 @@ class closedLoopMani():
         plt.axis('equal')
         plt.plot(x_sorted, y_sorted)
         
-    def plot4(self,q:list,mode:str):
+    def plot(self,q:list,mode:str):
         plt.grid(True)
         posFilter = np.array([[0],[0],[0],[1]])
         for Link in self.links:
@@ -389,19 +389,25 @@ class closedLoopMani():
                 jointCoor.append(E)
             self.__plotLink(jointCoor)
     
-    def animationfk4(self, frequency:int, mode:str, xlim:list, ylim:list):
+    def animationfk(self, frequency:int, mode:str, xlim:list, ylim:list):
+        if self.nlinks == 4:
+            return self.__animationfk4(frequency, mode, xlim, ylim)
+        # if self.nlinks == 5:
+            # return self.__fk5(q, outputJoint)
+    
+    def __animationfk4(self, frequency:int, mode:str, xlim:list, ylim:list):
         fig, ax = plt.subplots()
         bound = self.boundary4()
         q_values = np.linspace(bound[1],bound[0], frequency)
         posFilter = np.array([[0], [0], [0], [1]])
         
-        ax.set_xlim(xlim[0], xlim[1])  # Reset x-axis limits in each frame
-        ax.set_ylim(ylim[0], ylim[1])  # Reset y-axis limits in each frame
+        ax.set_xlim(xlim[0], xlim[1])  # set x-axis limits 
+        ax.set_ylim(ylim[0], ylim[1])  # set y-axis limits 
 
         def update(frame):
             ax.clear()  # Clear the previous frame
-            ax.set_xlim(xlim[0], xlim[1])  # Reset x-axis limits in each frame
-            ax.set_ylim(ylim[0], ylim[1])  # Reset y-axis limits in each frame
+            ax.set_xlim(xlim[0], xlim[1])  # Reset x-axis limits in 
+            ax.set_ylim(ylim[0], ylim[1])  # Reset y-axis limits in
             q = [q_values[frame]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
@@ -416,3 +422,5 @@ class closedLoopMani():
         frames = len(q_values)
         animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
         plt.show()
+        
+ 

@@ -6,15 +6,15 @@ import matplotlib.animation as animation
 
 ##### set closed loop manipulator ################################################################
 
-# L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
-# L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,2],[0,0,1]]))
-# L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
-# L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,4],[0,0]]))
+L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
+L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,2],[0,0,1]]))
+L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
+L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,4],[0,0]]))
 
-L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
-L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
-L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
-L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
+# L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
+# L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
+# L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
+# L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
 
 Robot = closedLoopMani([L1,L2,L4,L5])
 
@@ -49,6 +49,11 @@ Robot.plot([bound[1]],"positive")
 Robot.animationfk(100, "positive",[-10,10],[-10,10])
 plt.show()
 
+output_fk = Robot.fk(q,'d',"positive")
+
+pid = Robot.P_control_ik4(0.01,0.005,1,[0],'d',[2,2],'positive')
+print(pid)
+# print(output_fk)
 T_desired = [2,2]
 q_sol = Robot.ik(T_desired,'d')
 print("q_sol = ",q_sol)

@@ -415,13 +415,13 @@ class closedLoopMani():
                 jointCoor.append(E)
             self.__plotLink(jointCoor)
     
-    def animationfk(self, frequency:int, mode:str, xlim:list, ylim:list):
+    def animationfk(self, frequency:int, mode:str):
         if self.nlinks == 4:
-            return self.__animationfk4(frequency, mode, xlim, ylim)
+            return self.__animationfk4(frequency, mode)
         # if self.nlinks == 5:
             # return self.__fk5(q, outputJoint)
     
-    def __animationfk4(self, frequency:int, mode:str, xlim:list, ylim:list):
+    def __animationfk4(self, frequency:int, mode:str):
         fig, ax = plt.subplots()
         minmax = self.minmax4(mode)
         bound = self.boundary4()
@@ -448,7 +448,7 @@ class closedLoopMani():
 
         # Create the animation
         frames = len(q_values)
-        animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
+        animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
     def animationik(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):

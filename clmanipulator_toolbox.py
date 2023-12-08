@@ -451,11 +451,11 @@ class closedLoopMani():
         animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
         plt.show()
         
-    # def animationik(self, frequency:int, mode:str, xlim:list, ylim:list):
-    #     if self.nlinks == 4:
-    #         return self.__animationfk4(frequency, mode, xlim, ylim)
-    #     # if self.nlinks == 5:
-    #         # return self.__fk5(q, outputJoint)
+    def animationik(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
+        if self.nlinks == 4:
+            return self.__animationik4(dt, tol, kp, q_init,joint_output, taskspace_goal, mode)
+        # if self.nlinks == 5:
+            # return self.__fk5(q, outputJoint)
     
     def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str):
         traj_q = []
@@ -473,7 +473,7 @@ class closedLoopMani():
         traj_q = np.array(traj_q)
         return traj_q
     
-    def animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
+    def __animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
         fig, ax = plt.subplots()
         minmax = self.minmax4(mode)
         bound = self.boundary4()

@@ -51,7 +51,7 @@ Robot.plot([bound[1]],"positive")
 Robot.animationfk(100, "positive",[-10,10],[-10,10])
 plt.show()
 
-Robot.animationik4(0.01,0.005,1,[0],'d',[2,2],'positive')
+Robot.animationik(0.01,0.005,1,[0],'d',[2,2],'positive')
 plt.show()
 
 # output_fk = Robot.fk(q,'d',"positive")

@@ -1,2 +1,1 @@
-
-            q[0] = q[0] + (v[0]*dt)
+Robot.fk(q,'d',"positive")

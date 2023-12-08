@@ -397,17 +397,20 @@ class closedLoopMani():
     
     def __animationfk4(self, frequency:int, mode:str, xlim:list, ylim:list):
         fig, ax = plt.subplots()
+        minmax = self.__minmax(mode)
         bound = self.boundary4()
         q_values = np.linspace(bound[1],bound[0], frequency)
         posFilter = np.array([[0], [0], [0], [1]])
         
-        ax.set_xlim(xlim[0], xlim[1])  # set x-axis limits 
-        ax.set_ylim(ylim[0], ylim[1])  # set y-axis limits 
+        plt.grid(True)
+        plt.axis('equal')
+        ax.set_xlim(minmax[0], minmax[1])  # set x-axis limits 
+        ax.set_ylim(minmax[2], minmax[3])  # set y-axis limits 
 
         def update(frame):
             ax.clear()  # Clear the previous frame
-            ax.set_xlim(xlim[0], xlim[1])  # Reset x-axis limits in 
-            ax.set_ylim(ylim[0], ylim[1])  # Reset y-axis limits in
+            ax.set_xlim(minmax[0], minmax[1])  # Reset x-axis limits
+            ax.set_ylim(minmax[2], minmax[3])  # Reset y-axis limits
             q = [q_values[frame]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
@@ -429,7 +432,7 @@ class closedLoopMani():
     #     # if self.nlinks == 5:
     #         # return self.__fk5(q, outputJoint)
     
-    def P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, output_mode:str):
+    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, output_mode:str):
         traj_q = []
         q = q_init
         q_goal = self.ik(taskspace_goal,joint_output,output_mode)
@@ -445,30 +448,30 @@ class closedLoopMani():
         traj_q = np.array(traj_q)
         return traj_q
     
-    # def animationik4(self, tol:float, kp:float, q_init:float,joint_output:str, taskspace_goal:list, output_mode:str):
-    #     fig, ax = plt.subplots()
-    #     posFilter = np.array([[0], [0], [0], [1]])
+    def animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, output_mode:str ):
+        fig, ax = plt.subplots()
+        bound = self.boundary4()
+        path = self.__P_control_ik4(dt,tol,kp,q_init,joint_output,taskspace_goal,output_mode)
+        posFilter = np.array([[0], [0], [0], [1]])
         
-    #     ax.set_xlim(-10, 10)  # set x-axis limits
-    #     ax.set_ylim(-10, 10)  # set y-axis limits
-        
-    #     # array of trajectory in each joint
-    #     traj_q = []
-        
-    #     # q initial
-    #     q = q_init
-        
-    #     # error between taskspace_goal of end effector and initial position of end effector
-    #     error_x = taskspace_goal[0] - self.fk(q,joint_output,output_mode).A[0][3]
-    #     error_y = taskspace_goal[0] - self.fk(q,joint_output,output_mode).A[1][3]
-    #     error_mag = np.sqrt(error_x**2 + error_y**2)
-        
-    #     while error_mag > tol:
-        
-            
-    #     # P control 
-    #     v = error_mag * kp
-        
-    #     bound = self.boundary4()
-    #     q_values = np.linspace(bound[1],bound[0], tol)
-    #     posFilter = np.array([[0], [0], [0], [1]])
+        ax.set_xlim(-10,10)  # set x-axis limits 
+        ax.set_ylim(-10,10)  # set y-axis limits 
+
+        def update(frame):
+            ax.clear()  # Clear the previous frame
+            ax.set_xlim(-10,10)  # Reset x-axis limits in 
+            ax.set_ylim(-10,10)  # Reset y-axis limits in
+            q = [path[frame][0]]  # Change the joint angles in each frame
+            for Link in self.links:
+                jointCoor = []
+                for Joint in Link.jointName:
+                    output = self.fk(q, Joint, output_mode)
+                    D = output.A @ posFilter
+                    E = np.array([[D[0][0]], [D[1][0]]])
+                    jointCoor.append(E)
+                self.__plotLink(jointCoor)
+
+        # Create the animation
+        frames = len(path)
+        animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
+        plt.show()

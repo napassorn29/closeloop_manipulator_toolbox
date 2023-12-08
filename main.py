@@ -46,14 +46,17 @@ print(bound)
 Robot.plot([bound[0]],"positive")
 Robot.plot([bound[1]],"positive")
 
-Robot.animationfk(100, "positive",[-10,10],[-10,10])
-plt.show()
+minmax4 = Robot.minmax4("positive")
+print("minmax",minmax4)
+# Robot.animationfk(100, "positive",[-10,10],[-10,10])
+# Robot.animationik4(0.01,0.005,1,[0],'d',[2,2],'positive')
+# plt.show()
 
-output_fk = Robot.fk(q,'d',"positive")
+# output_fk = Robot.fk(q,'d',"positive")
 
-pid = Robot.P_control_ik4(0.01,0.005,1,[0],'d',[2,2],'positive')
-print(pid)
-# print(output_fk)
-T_desired = [2,2]
-q_sol = Robot.ik(T_desired,'d')
-print("q_sol = ",q_sol)
+# pid = Robot.P_control_ik4(0.01,0.005,1,[0],'d',[2,2],'positive')
+# print(pid)
+# # print(output_fk)
+# T_desired = [2,2]
+# q_sol = Robot.ik(T_desired,'d')
+# print("q_sol = ",q_sol)

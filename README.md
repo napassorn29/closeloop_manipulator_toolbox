@@ -28,5 +28,9 @@ import matplotlib.animation as animation
 # Import spatialmath
 from spatialmath import SE3
 ```
-## **function**
+## **Function**
+**clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
+- Name : Name of 
+
+## **Use Case**
 

@@ -320,6 +320,32 @@ class closedLoopMani():
 
         return [q_min,q_max]
     
+    def minmax4(self, mode:str):
+        posFilter = np.array([[0],[0],[0],[1]])
+        bound = self.boundary4()
+        q_value = np.linspace(bound[0],bound[1],100)
+        minx,maxx,miny,maxy = 0,0,0,0
+        joint = []
+        for q in range(len(q_value)):
+            for Link in self.links:
+                for Joint in Link.jointName:
+                    q_find = [q_value[q]]
+                    output = self.fk(q_find,Joint,mode)
+                    D = output.A @ posFilter
+                    if D[0][0] < minx:
+                        minx = D[0][0]
+                    elif D[0][0] > maxx:
+                        maxx = D[0][0]
+                    if D[1][0] < miny:
+                        miny = D[1][0]
+                    elif D[1][0] > maxy:
+                        maxy = D[1][0]
+                    else:
+                        continue
+                # joint = joint.append(Joint)
+        minmax = [minx,maxx,miny,maxy]
+        return minmax
+    
     def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = "positive"):
         if self.nlinks == 4:
             return self.__ik4(T_desired, outputJoint)
@@ -397,20 +423,19 @@ class closedLoopMani():
     
     def __animationfk4(self, frequency:int, mode:str, xlim:list, ylim:list):
         fig, ax = plt.subplots()
-        minmax = self.__minmax(mode)
+        minmax = self.minmax4(mode)
         bound = self.boundary4()
         q_values = np.linspace(bound[1],bound[0], frequency)
         posFilter = np.array([[0], [0], [0], [1]])
         
         plt.grid(True)
-        plt.axis('equal')
-        ax.set_xlim(minmax[0], minmax[1])  # set x-axis limits 
-        ax.set_ylim(minmax[2], minmax[3])  # set y-axis limits 
+        ax.set_xlim(minmax[0]-1, minmax[1]+1)  # set x-axis limits 
+        ax.set_ylim(minmax[2]-1, minmax[3]+1)  # set y-axis limits 
 
         def update(frame):
             ax.clear()  # Clear the previous frame
-            ax.set_xlim(minmax[0], minmax[1])  # Reset x-axis limits
-            ax.set_ylim(minmax[2], minmax[3])  # Reset y-axis limits
+            ax.set_xlim(minmax[0]-1, minmax[1]+1)  # Reset x-axis limits
+            ax.set_ylim(minmax[2]-1, minmax[3]+1)  # Reset y-axis limits
             q = [q_values[frame]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
@@ -432,10 +457,10 @@ class closedLoopMani():
     #     # if self.nlinks == 5:
     #         # return self.__fk5(q, outputJoint)
     
-    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, output_mode:str):
+    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str):
         traj_q = []
         q = q_init
-        q_goal = self.ik(taskspace_goal,joint_output,output_mode)
+        q_goal = self.ik(taskspace_goal,joint_output,mode)
         error = q - q_goal
         while abs(error) > tol:
             error = q - q_goal
@@ -448,24 +473,25 @@ class closedLoopMani():
         traj_q = np.array(traj_q)
         return traj_q
     
-    def animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, output_mode:str ):
+    def animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
         fig, ax = plt.subplots()
+        minmax = self.minmax4(mode)
         bound = self.boundary4()
-        path = self.__P_control_ik4(dt,tol,kp,q_init,joint_output,taskspace_goal,output_mode)
+        path = self.__P_control_ik4(dt,tol,kp,q_init,joint_output,taskspace_goal,mode)
         posFilter = np.array([[0], [0], [0], [1]])
         
-        ax.set_xlim(-10,10)  # set x-axis limits 
-        ax.set_ylim(-10,10)  # set y-axis limits 
+        ax.set_xlim(minmax[0]-1,minmax[1]+1)  # set x-axis limits 
+        ax.set_ylim(minmax[2]-1,minmax[3]+1)  # set y-axis limits 
 
         def update(frame):
             ax.clear()  # Clear the previous frame
-            ax.set_xlim(-10,10)  # Reset x-axis limits in 
-            ax.set_ylim(-10,10)  # Reset y-axis limits in
+            ax.set_xlim(minmax[0]-1,minmax[1]+1)  # Reset x-axis limits in 
+            ax.set_ylim(minmax[2]-1,minmax[3]+1)  # Reset y-axis limits in
             q = [path[frame][0]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
                 for Joint in Link.jointName:
-                    output = self.fk(q, Joint, output_mode)
+                    output = self.fk(q, Joint, mode)
                     D = output.A @ posFilter
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)
@@ -473,5 +499,5 @@ class closedLoopMani():
 
         # Create the animation
         frames = len(path)
-        animation = FuncAnimation(fig, update, frames=frames, interval=200, blit=False)
+        animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()

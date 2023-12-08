@@ -11,7 +11,7 @@ Chain ในปริภูมิ 2 มิติ สำหรับ 4-Bar Linkag
 ## **System Overview (Function and Argument)**
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/119843578/5e3f9422-06f0-442e-a4d6-933726595912)
 ## **Installation**
-download this file (closeloop_manipulator_toolbox) and place this file in folder to be used.
+download this file (closeloop_manipulator_toolbox) and place this file in the folder to be used.
 ## **Usage**
 place this code (import) at the top of the file to use
 ```python
@@ -29,8 +29,20 @@ import matplotlib.animation as animation
 from spatialmath import SE3
 ```
 ## **Function**
-**clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
-- Name : Name of 
+### **clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
+**Variable**
+- Name: Name of link.
+- Type: Type of link (fixed, input, and intermediate).
+- Joint_name: Name of the joint in each link.
+- Joint_pos: Position of each joint compared with the first joint in the link.
+
+**Method**
+
+### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
+**Variable**
+- Links: Link in robot that is defined above.
+
+**Method**
 
 ## **Use Case**
 

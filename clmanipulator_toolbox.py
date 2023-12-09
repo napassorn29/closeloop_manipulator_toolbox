@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from spatialmath import SE3
+import math
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import minimize
@@ -280,6 +281,28 @@ class closedLoopMani():
 
         return np.array([[x],[y]]) 
     
+    def is_circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int)):
+        # Center of circle 1
+        h1 = o1[0][0]
+        k1 = o1[1][0]
+        # Center of circle 2
+        h2 = o2[0][0]
+        k2 = o2[1][0]
+
+        # Coefficient calculation
+        v1 = (r1**2 - r2**2 - h1**2 + h2**2 - k1**2 + k2**2)/(2*(h2 - h1))
+        v2 = (k2 - k1)/(h2 - h1)
+        v3 = 1 + v2**2
+        v4 = 2*(v2*h1 - v1*v2 - k1)
+        v5 = v1**2 + h1**2 - 2*v1*h1 + k1**2 - r1**2
+
+        # Check if not intersected
+        inRoot = v4**2 - 4*v3*v5
+        if inRoot < 0:
+            return False # Not Intersected
+        else:
+            return True # Intersected
+    
     def __HMpose(self, pos, orien):
         T = SE3(pos[0][0], pos[1][0], 0)
         Rz = SE3.Rz(orien)
@@ -346,28 +369,32 @@ class closedLoopMani():
         minmax = [minx,maxx,miny,maxy]
         return minmax
     
-    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = "positive"):
+    def ik(self, T_desired : (list,np.ndarray), outputJoint:str, mode:str, tol:float):
         if self.nlinks == 4:
-            return self.__ik4(T_desired, outputJoint)
+            return self.__ik4(T_desired, outputJoint,tol,mode)
         # if self.nlinks == 5:
             # return self.__fk5(q, outputJoint)
-    
-    def __ik4(self, T_desired, outputJoint):
+            
+    def __ik4(self, T_desired, outputJoint,tol,mode):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
-        initial_guess = [[np.pi/4]]
+        
         boundary = self.boundary4()
+        initial_guess = [[np.pi/4]]
 
         def _objective(q):
-            T_actual = self.fk(q,outputJoint)
+            T_actual = self.fk(q,outputJoint,mode)
             return np.linalg.norm(T_actual.A[0:2,3] - T_desired)
         
         q_min = boundary[0]
         q_max = boundary[1]
         for init_guess in initial_guess:
             result = minimize(_objective,init_guess, bounds=[(q_min, q_max) for _ in initial_guess])
-
-        return result.x #radian
+        
+        if tol >= _objective(result.x) :
+            return result.x
+        else :
+            raise ValueError(f'T_desired is out of workspace')
          
     def __plotLink(self,jointCoordinates:list):
         x_coords = []
@@ -423,6 +450,8 @@ class closedLoopMani():
     
     def __animationfk4(self, frequency:int, mode:str):
         fig, ax = plt.subplots()
+        plt.grid(True)
+        plt.axis('equal')
         minmax = self.minmax4(mode)
         bound = self.boundary4()
         q_values = np.linspace(bound[1],bound[0], frequency)
@@ -434,6 +463,8 @@ class closedLoopMani():
 
         def update(frame):
             ax.clear()  # Clear the previous frame
+            plt.grid(True)
+            plt.axis('equal')
             ax.set_xlim(minmax[0]-1, minmax[1]+1)  # Reset x-axis limits
             ax.set_ylim(minmax[2]-1, minmax[3]+1)  # Reset y-axis limits
             q = [q_values[frame]]  # Change the joint angles in each frame
@@ -451,20 +482,20 @@ class closedLoopMani():
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
-    def animationik(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
+    def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         if self.nlinks == 4:
-            return self.__animationik4(dt, tol, kp, q_init,joint_output, taskspace_goal, mode)
+            return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
         # if self.nlinks == 5:
             # return self.__fk5(q, outputJoint)
     
-    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str):
+    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
         q = q_init
-        q_goal = self.ik(taskspace_goal,joint_output,mode)
+        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik)
         error = q - q_goal
         while abs(error) > tol:
             error = q - q_goal
-            v = abs(error) * kp
+            v = (-error) * kp
             
             q = q + (v*dt)
             
@@ -473,11 +504,13 @@ class closedLoopMani():
         traj_q = np.array(traj_q)
         return traj_q
     
-    def __animationik4(self,dt:float, tol:float, kp:float, q_init:list,joint_output:str, taskspace_goal:list, mode:str ):
+    def __animationik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
+        plt.grid(True)
+        plt.axis('equal')
         minmax = self.minmax4(mode)
         bound = self.boundary4()
-        path = self.__P_control_ik4(dt,tol,kp,q_init,joint_output,taskspace_goal,mode)
+        path = self.__P_control_ik4(dt,tol,kp,q_init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
         
         ax.set_xlim(minmax[0]-1,minmax[1]+1)  # set x-axis limits 
@@ -485,6 +518,8 @@ class closedLoopMani():
 
         def update(frame):
             ax.clear()  # Clear the previous frame
+            plt.grid(True)
+            plt.axis('equal')
             ax.set_xlim(minmax[0]-1,minmax[1]+1)  # Reset x-axis limits in 
             ax.set_ylim(minmax[2]-1,minmax[3]+1)  # Reset y-axis limits in
             q = [path[frame][0]]  # Change the joint angles in each frame

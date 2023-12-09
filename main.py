@@ -43,7 +43,6 @@ plt.figure(figsize=(6, 6))
 bound = Robot.boundary4()
 print(bound)
 
-Robot.plot([0.53078311],"negative")
 # Robot.plot([bound[1]],"positive")
 
 # minmax4 = Robot.minmax4("positive")
@@ -51,14 +50,18 @@ Robot.plot([0.53078311],"negative")
 # Robot.animationfk(100, "positive")
 # plt.show()
 
-Robot.animationik(0.01,0.005,1,[0],'d',[2,2],'positive')
-plt.show()
+# Robot.animationik(0.01,0.005,1,[0],'d',[5.1,3.0],'positive')
+# plt.show()
 
 # output_fk = Robot.fk(q,'d',"positive")
 
 # pid = Robot.P_control_ik4(0.01,0.005,1,[0],'d',[2,2],'positive')
 # print(pid)
 # # print(output_fk)
-T_desired = [2,2]
-q_sol = Robot.ik(T_desired,'d')
+T_desired = [5.1,3.0]
+q_sol = Robot.ik(T_desired,'d','positive',0.1)
 print("q_sol = ",q_sol)
+
+Robot.plot(q_sol,"positive")
+Robot.animationik(0.01,0.005,5,[0],[5.1,3.0],'d','positive',0.1)
+plt.show()

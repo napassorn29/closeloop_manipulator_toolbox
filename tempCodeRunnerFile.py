@@ -1,1 +1,2 @@
-Robot.fk(q,'d',"positive")
+
+# print(pid)

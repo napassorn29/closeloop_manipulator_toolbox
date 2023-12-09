@@ -343,6 +343,70 @@ class closedLoopMani():
 
         return [q_min,q_max]
     
+    def boundary5(self, res = 0.01):
+        fix_link = self.links[self.links_type.index('fixed')]
+        input_link_1 = self.links[self.links_type.index('input')]
+        input_link_2 = self.links[self.links_type.index('input',self.links_type.index('input')+1)]
+
+        intermediate_link = self.links.copy()
+        intermediate_link.remove(fix_link)
+        intermediate_link.remove(input_link_1)
+        intermediate_link.remove(input_link_2)
+
+        j1, j1_pos, j1_refDist = fix_link.connect(input_link_1)
+        j2, j2_pos, j2_refDist = fix_link.connect(input_link_2)
+        for Link in intermediate_link:
+            if input_link_1.is_connectable(Link):
+                j3 = input_link_1.connect(Link)[0]
+                intermediate_link_1 = Link
+            if input_link_2.is_connectable(Link):
+                j4 = input_link_2.connect(Link)[0]
+                intermediate_link_2 = Link
+        j5 = intermediate_link[0].connect(intermediate_link[1])[0]
+
+        l1 = fix_link.jointDist(j1,j2)
+        l2 = input_link_1.jointDist(j1,j3)
+        l3 = input_link_2.jointDist(j2,j4)
+        l4 = intermediate_link_1.jointDist(j3,j5)
+        l5 = intermediate_link_2.jointDist(j4,j5)
+
+        if l1+l2 < l3+l4+l5:
+            q1_min = 0
+            q1_max = 2 * np.pi
+        else:
+            q1_min = -np.arccos(((l1**2)+(l2**2)-((l3+l4+l5)**2))/(2*l1*l2))
+            q1_max = np.arccos(((l1**2)+(l2**2)-((l3+l4+l5)**2))/(2*l1*l2))
+
+        if l1+l3 < l2+l4+l5:
+            q2_min = 0
+            q2_max = 2 * np.pi
+        else:
+            q2_min = -np.arccos(((l1**2)+(l3**2)-((l2+l4+l5)**2))/(2*l1*l3))
+            q2_max = np.arccos(((l1**2)+(l3**2)-((l2+l4+l5)**2))/(2*l1*l3))
+        
+        Cspace = []
+        q1_space = []
+        q2_space = []
+        for q1 in range (int(2*np.pi/res)):
+            CspaceRow = []
+            for q2 in range (int(2*np.pi/res)):
+                R1 = np.array([[j1_pos[0][0] + l2*np.cos(q1*res)],[j1_pos[1][0] + l2*np.sin(q1*res)]])
+                R2 = np.array([[j2_pos[0][0] + l3*np.cos(q2*res)],[j2_pos[1][0] + l3*np.sin(q2*res)]])
+                if self.is_circle_intersection(R1, R2, l4, l5) == True: # Intersected
+                    CspaceRow.append(True)
+                    q1_space.append(q1*res)
+                    q2_space.append(q2*res)
+                else: # Not Intersected
+                    CspaceRow.append(False)
+            Cspace.append(CspaceRow)
+        Cspace = np.array(Cspace)
+        plt.imshow(Cspace)
+        plt.axis('equal')
+        plt.grid(False)
+        plt.show()
+
+        return Cspace, q1_space, q2_space
+    
     def minmax4(self, mode:str):
         posFilter = np.array([[0],[0],[0],[1]])
         bound = self.boundary4()

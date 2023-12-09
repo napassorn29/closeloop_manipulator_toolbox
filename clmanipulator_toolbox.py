@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from spatialmath import SE3
+import heapq
 import math
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
@@ -387,25 +388,32 @@ class closedLoopMani():
         Cspace = []
         q1_space = []
         q2_space = []
-        for q1 in range (int(2*np.pi/res)):
+        for q2 in range (int(2*np.pi/res)):
             CspaceRow = []
-            for q2 in range (int(2*np.pi/res)):
+            for q1 in range (int(2*np.pi/res)):
                 R1 = np.array([[j1_pos[0][0] + l2*np.cos(q1*res)],[j1_pos[1][0] + l2*np.sin(q1*res)]])
                 R2 = np.array([[j2_pos[0][0] + l3*np.cos(q2*res)],[j2_pos[1][0] + l3*np.sin(q2*res)]])
                 if self.is_circle_intersection(R1, R2, l4, l5) == True: # Intersected
-                    CspaceRow.append(True)
+                    CspaceRow.append(255)
                     q1_space.append(q1*res)
                     q2_space.append(q2*res)
                 else: # Not Intersected
-                    CspaceRow.append(False)
+                    CspaceRow.append(0)
             Cspace.append(CspaceRow)
         Cspace = np.array(Cspace)
-        plt.imshow(Cspace)
-        plt.axis('equal')
+        
+        Cspace_reshaped = Cspace[:, :, np.newaxis]
+        Cspace_reshaped = np.concatenate((Cspace_reshaped, Cspace_reshaped, Cspace_reshaped), axis=2)
+        
+        plt.imshow(Cspace_reshaped, aspect='equal',origin='lower',extent=(0, int(2*np.pi/res)*res, 0, int(2*np.pi/res)*res))
+        plt.xlabel('q1')
+        plt.ylabel('q2')
+        plt.xticks([0,int(np.pi/(2*res))*res,int(np.pi/res)*res,int(3*np.pi/(2*res))*res,int(2*np.pi/res)*res],[0,'π/2','π','3π/2','2π'])
+        plt.yticks([0,int(np.pi/(2*res))*res,int(np.pi/res)*res,int(3*np.pi/(2*res))*res,int(2*np.pi/res)*res],[0,'π/2','π','3π/2','2π'])
         plt.grid(False)
         plt.show()
 
-        return Cspace, q1_space, q2_space
+        return Cspace_reshaped, q1_space, q2_space
     
     def minmax4(self, mode:str):
         posFilter = np.array([[0],[0],[0],[1]])

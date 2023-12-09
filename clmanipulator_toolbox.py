@@ -628,3 +628,82 @@ class closedLoopMani():
         frames = len(path)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
+    
+    # path planning 5 bar
+    def __settingvariablepath(self, c_space, q1_space, q2_space, cost_function):
+        self.c_space = c_space
+        self.q1_space = q1_space
+        self.q2_space = q2_space
+        self.cost_function = cost_function
+        
+    def heuristic(self, current:list, goal:list):
+        return np.linalg.norm(np.array(current) - np.array(goal))
+    
+    def get_neighbors(self, node):
+        neighbors = []
+        x, y = node
+
+        # Possible neighboring configurations
+        possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+
+        for neighbor in possible_neighbors:
+            if 0 <= neighbor[0] < len(self.q1_space) and 0 <= neighbor[1] < len(self.q2_space):
+                neighbors.append(neighbor)
+
+        return neighbors
+    
+    def a_star(self, start, goal):
+        priority_queue = [(0, start)]
+        came_from = {}
+        cost_so_far = {start: 0}
+
+        while priority_queue:
+            current_cost, current_node = heapq.heappop(priority_queue)
+
+            if current_node == goal:
+                path = [current_node]
+                while current_node in came_from:
+                    current_node = came_from[current_node]
+                    path.append(current_node)
+                path.reverse()
+                return path
+
+            for neighbor in self.get_neighbors(current_node):
+                new_cost = cost_so_far[current_node] + self.cost_function(current_node, neighbor)
+                if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                    cost_so_far[neighbor] = new_cost
+                    priority = new_cost + self.heuristic(neighbor, goal)
+                    heapq.heappush(priority_queue, (priority, neighbor))
+                    came_from[neighbor] = current_node
+
+        return None
+    
+    def plan_path(self, start, goal):
+        start_index = (np.argmin(np.abs(self.q1_space - start[0])), np.argmin(np.abs(self.q2_space - start[1])))
+        goal_index = (np.argmin(np.abs(self.q1_space - goal[0])), np.argmin(np.abs(self.q2_space - goal[1])))
+
+        path_indices = self.a_star(start_index, goal_index)
+
+        if path_indices:
+            path = [(self.q1_space[index[0]], self.q2_space[index[1]]) for index in path_indices]
+            return path
+        else:
+            return None
+        
+    def cost_function(self, current, neighbor):
+        q1_current, q2_current = current
+        q1_neighbor, q2_neighbor = neighbor
+
+        # Convert indices to angles
+        angle_current = (q1_current, q2_current)
+        angle_neighbor = (q1_neighbor, q2_neighbor)
+
+        # Evaluate cost based on the condition
+        if self.is_circle_intersection(angle_current, angle_neighbor):
+            return 1
+        else:
+            return 1000000
+
+        
+    # def path_planning5(self, start:list, stop:list, mode:str, res:float):
+    #     if 

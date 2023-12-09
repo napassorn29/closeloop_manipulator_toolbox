@@ -80,7 +80,21 @@ q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
 print("q_sol = ", q_sol)
 
 output = Robot.fk(q_sol,'d')
-print(output)
+bound = Robot.boundary5()
+print(bound)
+
+planner = AStarPathPlanner(C_space, q1_space, q2_space, cost_function)
+start_point = (0, 0)
+goal_point = (2 * np.pi, 2 * np.pi)
+
+path = planner.plan_path(start_point, goal_point)
+
+if path:
+    print("Path found:", path)
+else:
+    print("No valid path found.")
+# print(output)
+
 
 
 # Robot.plot(q_sol,"positive")

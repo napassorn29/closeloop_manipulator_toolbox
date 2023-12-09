@@ -5,7 +5,7 @@ Closed Loop Kinematic Chain สำหรับ 4 และ 5 Bar Linkage เม�
 Task Space ของ Closed Loop Kinematic Chain โดยใช้ DH parameter โดยผลลัพธ์ที่ได้จะมีในส่วนของตำแหน่งปลาย 
 End Effector (Task Space) จะทราบทั้ง Translation, Rotation และมีการแสดงผลเป็นภาพเพื่อให้สามารถง่ายต่อการสังเกต
 ## **Objective**
-1) เพื่อศึกษา Closed Loop Kinematic Chain ในปริภูมิ2 มิติ สำหรับ 4-Bar Linkage และ 5-Bar Linkage
+1) เพื่อศึกษา Closed Loop Kinematic Chain ในปริภูมิ 2 มิติ สำหรับ 4-Bar Linkage และ 5-Bar Linkage
 2) เพื่อพัฒนา Toolbox สำหรับการทำ Forward Kinematics, Inverse Kinematics และ Simulation ของ Closed Loop Kinematic 
 Chain ในปริภูมิ 2 มิติ สำหรับ 4-Bar Linkage และ 5-Bar Linkage
 ## **System Overview (Function and Argument)**

@@ -436,8 +436,8 @@ class closedLoopMani():
     def ik(self, T_desired : (list,np.ndarray), outputJoint:str, mode:str, tol:float):
         if self.nlinks == 4:
             return self.__ik4(T_desired, outputJoint,tol,mode)
-        # if self.nlinks == 5:
-            # return self.__fk5(q, outputJoint)
+        if self.nlinks == 5:
+            return self.__ik5(T_desired, outputJoint, tol,mode)
             
     def __ik4(self, T_desired, outputJoint,tol,mode):
         if not(outputJoint in self.joints):
@@ -458,6 +458,26 @@ class closedLoopMani():
         if tol >= _objective(result.x) :
             return result.x
         else :
+            raise ValueError(f'T_desired is out of workspace')
+        
+    def __ik5(self, T_desired, outputJoint, tol):
+        if not(outputJoint in self.joints):
+            raise ValueError(f'Output joint does not exist.')
+        
+        C_space, q1_space, q2_space = self.boundary5()
+        # initial_guess = [[np.pi/4],[np.pi/4]]
+        error = []
+
+        for i in range (len(q1_space)):
+            q = [q1_space[i], q2_space[i]]
+            T_actual = self.fk(q, outputJoint)
+            error.append(np.linalg.norm(T_actual.A[0:2,3] - T_desired))
+
+        if tol >= min(error):
+            min_error_index = error.index(min(error))
+            result = [q1_space[min_error_index], q2_space[min_error_index]]
+            return result
+        else:
             raise ValueError(f'T_desired is out of workspace')
          
     def __plotLink(self,jointCoordinates:list):

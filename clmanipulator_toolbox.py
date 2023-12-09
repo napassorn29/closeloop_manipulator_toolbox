@@ -460,7 +460,7 @@ class closedLoopMani():
         else :
             raise ValueError(f'T_desired is out of workspace')
         
-    def __ik5(self, T_desired, outputJoint, tol):
+    def __ik5(self, T_desired, outputJoint, tol,mode):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         

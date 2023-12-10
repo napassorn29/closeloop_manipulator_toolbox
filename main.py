@@ -77,6 +77,7 @@ output = Robot.fk(q,'d','positive')
 print(output)
 
 # T_desired = [48.69,11.7]
+# # T_desired = [12.0,4.0]
 # q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
 # print("q_sol = ", q_sol)
 

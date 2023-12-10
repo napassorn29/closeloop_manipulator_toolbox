@@ -686,11 +686,11 @@ class closedLoopMani():
     # def a_star(self, start:list, goal:list, res:float):
     
     def a_star(self, start:list, goal:list, outputJoint:str, mode:str):
-        q_startik = self.ik(start, outputJoint, mode, 0.05)
-        q_start = tuple(q_startik)
+        # q_startik = self.ik(start, outputJoint, mode, 0.05)
+        q_start = tuple(start)
         goal = tuple(goal)
 
-        priority_queue = [(0, q_start)]
+        priority_queue = [(0, goal)]
         came_from = {}
         cost_so_far = {q_start: 0}
         
@@ -705,10 +705,12 @@ class closedLoopMani():
             cost_so_far[current_node] = cost_so_far.get(current_node, 0) + self.cost_intersection5(self, q[0], q[1])
 
             if current_node == goal:
+                value = 1 
                 path = [current_node]
                 while current_node in came_from:
                     current_node = came_from[current_node]
                     path.append(current_node)
+                    value = 2
                 path.reverse()
                 return path
 
@@ -724,6 +726,7 @@ class closedLoopMani():
                     priority = new_cost + self.heuristic(neighbor, goal)
                     heapq.heappush(priority_queue, (priority, neighbor))
                     came_from[neighbor] = current_node
+                value = 0
         return None
 
     def is_ik_possible(self, node, outputJoint, mode, tolerance):
@@ -741,15 +744,20 @@ class closedLoopMani():
         start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
         goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
         
-        return np.argmin(np.abs(q1_space - q_goal[0]))
+        start = [q1_space[start_index[0]], q2_space[start_index[1]]]
+        goal = [q1_space[goal_index[0]], q2_space[goal_index[1]]]
+        
+        path_indices = self.a_star(start, goal, outputJoint, mode)
         
         # path_indices = self.a_star(start_index, goal_index, outputJoint, mode)
-
+        return path_indices
         # if path_indices:
         #     path = [(q1_space[index[0]], q2_space[index[1]]) for index in path_indices]
         #     return path
         # else:
         #     return None
+        
+        
     # def plan_path(self, start, goal):
     #     start_index = (np.argmin(np.abs(self.q1_space - start[0])), np.argmin(np.abs(self.q2_space - start[1])))
     #     goal_index = (np.argmin(np.abs(self.q1_space - goal[0])), np.argmin(np.abs(self.q2_space - goal[1])))

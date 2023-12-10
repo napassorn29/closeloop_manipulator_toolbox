@@ -79,20 +79,22 @@ T_desired = [32.97,38.69]
 q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
 print("q_sol = ", q_sol)
 
-output = Robot.fk(q_sol,'d')
-bound = Robot.boundary5()
-print(bound)
+# output = Robot.fk(q_sol,'d')
+# Cspace_reshaped, q1_space, q2_space = Robot.boundary5()
+# print(q1_space)
 
-planner = AStarPathPlanner(C_space, q1_space, q2_space, cost_function)
-start_point = (0, 0)
-goal_point = (2 * np.pi, 2 * np.pi)
+cost = Robot.cost_intersection5(0.79, 2.04)
+print('cost = ', cost)  
+# planner = AStarPathPlanner(C_space, q1_space, q2_space, cost_function)
+# start_point = (0, 0)
+# goal_point = (2 * np.pi, 2 * np.pi)
 
-path = planner.plan_path(start_point, goal_point)
+# path = planner.plan_path(start_point, goal_point)
 
-if path:
-    print("Path found:", path)
-else:
-    print("No valid path found.")
+# if path:
+#     print("Path found:", path)
+# else:
+#     print("No valid path found.")
 # print(output)
 
 
@@ -100,3 +102,6 @@ else:
 # Robot.plot(q_sol,"positive")
 # Robot.animationik(0.01,0.005,5,[0,0],[32.97,38.69],'d','positive',0.1)
 # plt.show()
+
+
+# path planning 

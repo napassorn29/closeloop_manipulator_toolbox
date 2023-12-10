@@ -660,13 +660,113 @@ class closedLoopMani():
         if self.is_circle_intersection(R1, R2, l4, l5) == True: # Intersected
             cost = 1
         else: # Not Intersected
-            cost = 1000000
+            cost = 1000000  
             
         return cost
     
-    def path_planning5(self, start:list, stop:list, mode:str, res:float):
-        if self.nlinks == 5:
-            return self.__path_planning5(start, stop, mode, res)
+    def heuristic(self, current, goal):
+        # Simple Euclidean distance can be used as a heuristic
+        return np.linalg.norm(np.array(current) - np.array(goal))
+    
+    def __get_neighbors(self, node:list, res:float):
+        neighbors = []
+        x, y = node
+
+        # Possible neighboring configurations
+        possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
+
+        for neighbor in possible_neighbors:
+            if 0 <= neighbor[0] < np.pi*2 and 0 <= neighbor[1] < np.pi*2:
+                neighbors.append(neighbor)
+
+        return neighbors
+    
+    # def a_star(self, start:list, goal:list, outputJoint:str, mode:str):
+    
+    # def a_star(self, start:list, goal:list, res:float):
+    
+    def a_star(self, start:list, goal:list, outputJoint:str, mode:str):
+        q_startik = self.ik(start, outputJoint, mode, 0.05)
+        q_start = tuple(q_startik)
+        goal = tuple(goal)
+
+        priority_queue = [(0, q_start)]
+        came_from = {}
+        cost_so_far = {q_start: 0}
+        
+        while priority_queue:
+            current_cost, current_node = heapq.heappop(priority_queue)
+
+        # Check if inverse kinematics can be calculated for the current node
+            if not self.is_ik_possible(current_node, outputJoint, mode, 0.01):
+                continue
+
+            q = self.ik(current_node, outputJoint, mode, 0.01)
+            cost_so_far[current_node] = cost_so_far.get(current_node, 0) + self.cost_intersection5(self, q[0], q[1])
+
+            if current_node == goal:
+                path = [current_node]
+                while current_node in came_from:
+                    current_node = came_from[current_node]
+                    path.append(current_node)
+                path.reverse()
+                return path
+
+            for neighbor in self.__get_neighbors(current_node, 0.01):
+                # Check if inverse kinematics can be calculated for the neighbor
+                if not self.is_ik_possible(neighbor, outputJoint, mode, 0.01):
+                    continue
+
+                new_cost = cost_so_far[current_node] + self.cost_intersection5(self, q[0], q[1])
+
+                if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                    cost_so_far[neighbor] = new_cost
+                    priority = new_cost + self.heuristic(neighbor, goal)
+                    heapq.heappush(priority_queue, (priority, neighbor))
+                    came_from[neighbor] = current_node
+        return None
+
+    def is_ik_possible(self, node, outputJoint, mode, tolerance):
+        try:
+            self.ik(node, outputJoint, mode, tolerance)
+            return True
+        except ValueError:
+            return False
+        
+    def plan_path(self, start:list, goal:list, outputJoint:str, mode:str):
+        Cspace_reshaped, q1_space, q2_space = self.boundary5()
+        q_start = np.array(self.ik(start, outputJoint, mode, 0.05))
+        q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05))
+        
+        start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
+        goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
+        
+        return np.argmin(np.abs(q1_space - q_goal[0]))
+        
+        # path_indices = self.a_star(start_index, goal_index, outputJoint, mode)
+
+        # if path_indices:
+        #     path = [(q1_space[index[0]], q2_space[index[1]]) for index in path_indices]
+        #     return path
+        # else:
+        #     return None
+    # def plan_path(self, start, goal):
+    #     start_index = (np.argmin(np.abs(self.q1_space - start[0])), np.argmin(np.abs(self.q2_space - start[1])))
+    #     goal_index = (np.argmin(np.abs(self.q1_space - goal[0])), np.argmin(np.abs(self.q2_space - goal[1])))
+
+    #     path_indices = self.a_star(start_index, goal_index)
+
+    #     if path_indices:
+    #         path = [(self.q1_space[index[0]], self.q2_space[index[1]]) for index in path_indices]
+    #         return path
+    #     else:
+    #         return None
+    
+    # def path_planning5(self, start:list, stop:list, output_joint:str, mode:str, tol:float, res:float):
+        
+    #     heuristic = np.linalg.norm(np.array(current) - np.array(goal))
+    #     q = self.ik(start,output_joint,mode,0.01)
+    #     cost = self.cost_intersection5(q[0],q[1])
     
     # path planning 5 bar
     # def __settingvariablepath(self, c_space, q1_space, q2_space, cost_function):

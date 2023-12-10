@@ -71,20 +71,31 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 # print("q_sol = ",q_sol)
 
 q = [np.pi/2-np.pi/4,np.pi/2+np.pi/4]
+q = [0,0]
 mode = "positive"
 output = Robot.fk(q,'d','positive')
 print(output)
 
-T_desired = [32.97,38.69]
-q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
-print("q_sol = ", q_sol)
+# T_desired = [48.69,11.7]
+# q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
+# print("q_sol = ", q_sol)
 
 # output = Robot.fk(q_sol,'d')
 # Cspace_reshaped, q1_space, q2_space = Robot.boundary5()
 # print(q1_space)
 
-cost = Robot.cost_intersection5(0.79, 2.04)
-print('cost = ', cost)  
+# cost = Robot.cost_intersection5(np.pi/2, np.pi*2)
+# print('cost = ', cost)  
+
+a_star = Robot.plan_path([48.69,11.7], [32.97,38.69], "d", "positive")
+print("a_star = ", a_star)
+
+# a_star = Robot.a_star([48.69,11.7], [32.97,38.69], "d", "positive")
+# print("a_star = ", a_star) 
+
+# heu = Robot.heuristic([48.69,11.7], [32.97,38.69])
+# print("heuristic cost : ", heu)
+
 # planner = AStarPathPlanner(C_space, q1_space, q2_space, cost_function)
 # start_point = (0, 0)
 # goal_point = (2 * np.pi, 2 * np.pi)

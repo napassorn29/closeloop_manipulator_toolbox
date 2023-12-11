@@ -6,17 +6,17 @@ import matplotlib.animation as animation
 
 ##### set closed loop manipulator ################################################################
 
-L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
-L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,2],[0,0,1]]))
-L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
-L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,4],[0,0]]))
+# L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
+# L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,2],[0,0,1]]))
+# L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
+# L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,4],[0,0]]))
 
-# L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
-# L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
-# L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
-# L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
+# # L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
+# # L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
+# # L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
+# # L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
 
-Robot = closedLoopMani([L1,L2,L4,L5])
+# Robot = closedLoopMani([L1,L2,L4,L5])
 
 # L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
 # L2 = link('B','input',np.array(['a','e','g']),np.array([[0,4,2],[0,0,1]]))
@@ -26,41 +26,41 @@ Robot = closedLoopMani([L1,L2,L4,L5])
 
 # Robot = closedLoopMani([L1,L2,L3,L4,L5])
 
-# L1 = link('A','fixed',np.array(['a','b']),np.array([[0,61],[0,0]]))
-# L2 = link('B','input',np.array(['a','e','g']),np.array([[0,19.315,2],[0,0,1]]))
-# L3 = link('C','input',np.array(['b','c','f']),np.array([[0,16.762,2],[0,0,-1]]))
-# L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,31.616],[0,0]]))
-# L5 = link('E','intermediate',np.array(['c','d']),np.array([[0,31.342],[0,0]]))
+L1 = link('A','fixed',np.array(['a','b']),np.array([[0,61],[0,0]]))
+L2 = link('B','input',np.array(['a','e','g']),np.array([[0,19.315,2],[0,0,1]]))
+L3 = link('C','input',np.array(['b','c','f']),np.array([[0,16.762,2],[0,0,-1]]))
+L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,31.616],[0,0]]))
+L5 = link('E','intermediate',np.array(['c','d']),np.array([[0,31.342],[0,0]]))
 
-# Robot = closedLoopMani([L1,L2,L3,L4,L5])
+Robot = closedLoopMani([L1,L2,L3,L4,L5])
 
 ###################################################################################################
 ##### forward kinematic of Robot ##################################################################
-q = [2.1267784793154387]
-mode = "positive"
-output = Robot.fk(q,'d',mode)
+# q = [2.1267784793154387]
+# mode = "positive"
+# output = Robot.fk(q,'d',mode)
 
 # q = [np.pi/2+np.pi/6,np.pi/2-np.pi/6]
 # mode = "positive"
-# output = Robot.fk([np.pi/2+np.pi/6,np.pi/2-np.pi/6],'d','positive')
+output = Robot.fk([0,0],'d','positive')
 print(output)
 
 plt.figure(figsize=(6, 6))
-# plt.grid(True)
+# # plt.grid(True)
 
-bound = Robot.boundary4()
-print(bound)
+# bound = Robot.boundary4()
+# print(bound)
 
-# Robot.plot([bound[1]],"positive")
+# # Robot.plot([bound[1]],"positive")
 
-minmax4 = Robot.minmax4("positive")
-print("minmax",minmax4)
+# minmax4 = Robot.minmax4("positive")
+# print("minmax",minmax4)
 
-Robot.animationfk(100, "positive")
+# Robot.animationfk(100, "positive")
+# # plt.show()
+
+# Robot.animationik(0.01,0.005,1,[0],np.array([[5.1],[3.0]]),'d','positive',1)
 # plt.show()
-
-Robot.animationik(0.01,0.005,1,[0],np.array([[5.1],[3.0]]),'d','positive',1)
-plt.show()
 
 # output_fk = Robot.fk(q,'d',"positive")
 
@@ -102,9 +102,11 @@ plt.show()
 # print("a_star = ", len(a_star))
 # print("a_star = ", a_star)
 
-# q1,q2,q_all = Robot.P_control_ik5(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01)
-# print("q1:",q1)
-# print("q2:",q2)
+q1, q2, q_all, traj_q = Robot.P_control_ik5(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01)
+print("q1:",q1)
+print("q2:",q2)
+print("q_all:",q_all)
+print("traj_q:",traj_q)
 
 # Robot.animationik(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01)
 # # print("q1:",q1)

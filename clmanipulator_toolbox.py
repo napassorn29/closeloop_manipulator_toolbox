@@ -612,7 +612,7 @@ class closedLoopMani():
     def P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
         q = q_init
-        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, )
+        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
         error = q - q_goal
         while abs(error) > tol:
             error = q - q_goal
@@ -657,19 +657,24 @@ class closedLoopMani():
         frames = len(path)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
-        
+    
     def P_control_ik5(self, dt: float, tol: float, kp: float, start: list, goal: list, joint_output: str, mode: str, tol_ik: float):
         traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * 100)
-        q1 = [point[0] if isinstance(point, list) else point for point in traj_q]
-        q2 = [point[1] if isinstance(point, list) else point for point in traj_q]
-
-        return q1, q2, traj_q
+        q1 = []
+        q2 = []
+        for q_num in range(len(traj_q)):
+            q1.append([traj_q[q_num][0]])
+            q2.append([traj_q[q_num][1]])
+        q1 = np.array(q1)
+        q2 = np.array(q2)
+        q_all = np.array(traj_q)
+        return q1, q2, q_all, traj_q
     
     def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
-        pathq1,pathq2,traj_q = self.__P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
+        pathq1,pathq2,traj_q = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
         ax.set_xlim(-10,10)  # set x-axis limits 
         ax.set_ylim(-10,10)  # set y-axis limits 
@@ -686,7 +691,7 @@ class closedLoopMani():
             for Link in self.links:
                 jointCoor = []
                 for Joint in Link.jointName:
-                    output = self.fk([q1,1.80], Joint, mode)
+                    output = self.fk([0,q2], Joint, mode = "positive")
                     D = output.A @ posFilter
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)

@@ -71,14 +71,14 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 # print("q_sol = ",q_sol)
 
 q = [np.pi/2-np.pi/4,np.pi/2+np.pi/4]
-q = [0,0]
+q = [0.47118596694901044, -0.0006370324612307346]
 mode = "positive"
 output = Robot.fk(q,'d','positive')
 print(output)
 
-# T_desired = [48.69,11.7]
+# T_desired = np.array([[48.69],[11.7]])
 # # T_desired = [12.0,4.0]
-# q_sol = Robot.ik(T_desired,'d','positive',tol=0.05)
+# q_sol = Robot.ik(T_desired,'d',mode='++',method = 'geometrical')
 # print("q_sol = ", q_sol)
 
 # output = Robot.fk(q_sol,'d')
@@ -88,7 +88,10 @@ print(output)
 # cost = Robot.cost_intersection5(np.pi/2, np.pi*2)
 # print('cost = ', cost)  
 
-a_star = Robot.plan_path([48.69,11.7], [32.97,38.69], "d", "positive")
+nei = Robot.grid_neighbors([5,5], 1)
+print(nei)
+
+a_star = Robot.plan_path(np.array([[48.69],[11.7]]), np.array([[32.97],[38.69]]), "d", '++',1)
 print("a_star = ", a_star)
 
 # a_star = Robot.a_star([48.69,11.7], [32.97,38.69], "d", "positive")
@@ -117,3 +120,106 @@ print("a_star = ", a_star)
 
 
 # path planning 
+
+# import heapq
+
+# def astar_search(start, goal, neighbors_fn, heuristic_fn):
+#     # Function to create a node tuple with state, parent, cost, and heuristic
+#     def make_node(state, parent=None, cost=0, heuristic=0):
+#         return (state, parent, cost, heuristic)
+
+#     # Priority queue to store nodes with their combined cost and heuristic values
+#     open_set = []
+#     # Set to keep track of explored states
+#     closed_set = set()
+
+#     # Create the start node and push it onto the priority queue
+#     start_node = make_node(start, cost=0, heuristic=heuristic_fn(start))
+#     heapq.heappush(open_set, (0, start_node))
+
+#     # Main A* search loop
+#     while open_set:
+#         # Pop the node with the lowest combined cost and heuristic value
+#         current_cost, current_node = heapq.heappop(open_set)
+
+#         # Check if the goal is reached
+#         if current_node[0] == goal:
+#             path = []
+#             # Reconstruct the path from goal to start
+#             while current_node:
+#                 path.append(current_node[0])
+#                 current_node = current_node[1]
+#             return path[::-1]
+
+#         # Mark the current state as explored
+#         closed_set.add(current_node[0])
+
+#         # Explore neighbors of the current state
+#         for neighbor in neighbors_fn(current_node[0]):
+#             if neighbor in closed_set:
+#                 continue
+
+#             # Calculate the cost to reach the neighbor and the heuristic value
+#             cost = current_node[2] + 1  # Assuming uniform cost for simplicity
+#             heuristic = heuristic_fn(neighbor)
+#             new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic)
+
+#             # Check if the neighbor is not in the open set
+#             if all(neighbor != node[0] for _, node in open_set):
+#                 # Push the new node onto the priority queue
+#                 heapq.heappush(open_set, (cost + heuristic, new_node))
+#             # Check if the new path to the neighbor is better
+#             elif cost < next(cost for c, n in open_set if n[0] == neighbor):
+#                 # Update the node in the open set with the new path
+#                 open_set = [(c, n) if n[0] != neighbor else (cost + heuristic, new_node) for c, n in open_set]
+
+#     # No path found
+#     return None
+
+
+# Example usage:
+# def grid_neighbors(state):
+#     x, y = state
+#     neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+#     return [(nx, ny) for nx, ny in neighbors if 0 <= nx < 10 and 0 <= ny < 10]  # Adjust grid size as needed
+
+# def grid_neighbors(node):
+#     neighbors = []
+#     x, y = node
+#     possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
+#     for neighbor in possible_neighbors:
+#         if 0 <= neighbor[0] < np.pi*2 and 0 <= neighbor[1] < np.pi*2:
+#             neighbors.append(neighbor)
+
+#     return neighbors
+
+# def grid_heuristic(state, goal):
+#     return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+
+# start_position = (0, 0)
+# goal_position = (1, 1)
+# path = astar_search(start_position, goal_position, grid_neighbors, lambda state: grid_heuristic(state, goal_position))
+
+# if path:
+#     print("Path found:", path)
+# else:
+#     print("No path found.")
+    
+# print(grid_neighbors([1,2]))
+
+# start_position = (0, 0)
+# goal_position = (0.5, 0.5)
+# resolution = 0.1
+
+# path = Robot.astar_search(
+#     start_position,
+#     goal_position,
+#     lambda node: Robot.grid_neighbors(node, resolution),
+#     lambda node, goal: Robot.grid_heuristic(node, goal),
+#     lambda q1, q2, links, links_type: Robot.cost_intersection5(q1, q2, links, links_type)
+# )
+
+# if path:
+#     print("Path found:", path)
+# else:
+#     print("No path found.")

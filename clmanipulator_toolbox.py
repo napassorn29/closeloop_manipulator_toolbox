@@ -128,11 +128,60 @@ class closedLoopMani():
         if self.nlinks == 4:
             if self.links_type.count('input') != 1:
                 raise ValueError(f'4-Bar manipulator require 1 input link. Current number of input link: {self.links_type.count("input")}')
+            
+            self.links = Links
+            self.fix_link = self.links[self.links_type.index('fixed')]
+            self.input_link = self.links[self.links_type.index('input')]
+
+            intermediate_link = self.links.copy()
+            intermediate_link.remove(self.fix_link)
+            intermediate_link.remove(self.input_link)
+
+            self.j1, self.j1_pos, j1_refDist = self.fix_link.connect(self.input_link)
+            for Link in intermediate_link:
+                if self.fix_link.is_connectable(Link):
+                    self.j2, self.j2_pos, j2_refDist = self.fix_link.connect(Link)
+                    self.intermediate_link_1 = Link
+                if self.input_link.is_connectable(Link):
+                    self.j3 = self.input_link.connect(Link)[0]
+                    self.intermediate_link_2 = Link
+            self.j4 = intermediate_link[0].connect(intermediate_link[1])[0]
+
+            self.l1 = self.fix_link.jointDist(self.j1,self.j2)
+            self.l2 = self.input_link.jointDist(self.j1,self.j3)
+            self.l3 = self.intermediate_link_1.jointDist(self.j2,self.j4)
+            self.l4 = self.intermediate_link_2.jointDist(self.j3,self.j4)
+
         elif self.nlinks == 5:
             if self.links_type.count('input') != 2:
                 raise ValueError(f'5-Bar manipulator require 2 input link. Current number of input link: {self.links_type.count("input")}')
-     
-        self.links = Links
+            
+            self.links = Links
+            self.fix_link = self.links[self.links_type.index('fixed')]
+            self.input_link_1 = self.links[self.links_type.index('input')]
+            self.input_link_2 = self.links[self.links_type.index('input',self.links_type.index('input')+1)]
+
+            intermediate_link = self.links.copy()
+            intermediate_link.remove(self.fix_link)
+            intermediate_link.remove(self.input_link_1)
+            intermediate_link.remove(self.input_link_2)
+
+            self.j1, self.j1_pos, j1_refDist = self.fix_link.connect(self.input_link_1)
+            self.j2, self.j2_pos, j2_refDist = self.fix_link.connect(self.input_link_2)
+            for Link in intermediate_link:
+                if self.input_link_1.is_connectable(Link):
+                    self.j3 = self.input_link_1.connect(Link)[0]
+                    self.intermediate_link_1 = Link
+                if self.input_link_2.is_connectable(Link):
+                    self.j4 = self.input_link_2.connect(Link)[0]
+                    self.intermediate_link_2 = Link
+            self.j5 = intermediate_link[0].connect(intermediate_link[1])[0]
+
+            self.l1 = self.fix_link.jointDist(self.j1,self.j2)
+            self.l2 = self.input_link_1.jointDist(self.j1,self.j3)
+            self.l3 = self.input_link_2.jointDist(self.j2,self.j4)
+            self.l4 = self.intermediate_link_1.jointDist(self.j3,self.j5)
+            self.l5 = self.intermediate_link_2.jointDist(self.j4,self.j5)
 
         Joints = []
         for Link in self.links:
@@ -141,6 +190,9 @@ class closedLoopMani():
         self.joints = list(set(Joints))
 
     def fk(self, q, outputJoint, mode = "positive"):
+        if not(outputJoint in self.joints):
+            raise ValueError(f'Output joint does not exist.')
+        
         if self.nlinks == 4:
             if len(q) != 1:
                 raise ValueError(f'4-Bar manipulator require 1 joint configuration.')
@@ -151,45 +203,21 @@ class closedLoopMani():
             return self.__fk5(q, outputJoint, mode)
             
     def __fk4(self, q, outputJoint, mode = "positive"):
-        if not(outputJoint in self.joints):
-            raise ValueError(f'Output joint does not exist.')
-
-        fix_link = self.links[self.links_type.index('fixed')]
-        input_link = self.links[self.links_type.index('input')]
-
-        intermediate_link = self.links.copy()
-        intermediate_link.remove(fix_link)
-        intermediate_link.remove(input_link)
-
-        j1, j1_pos, j1_refDist = fix_link.connect(input_link)
-        for Link in intermediate_link:
-            if fix_link.is_connectable(Link):
-                j2, j2_pos, j2_refDist = fix_link.connect(Link)
-                intermediate_link_1 = Link
-            if input_link.is_connectable(Link):
-                j3 = input_link.connect(Link)[0]
-                intermediate_link_2 = Link
-        j4 = intermediate_link[0].connect(intermediate_link[1])[0]
-
-        l2 = input_link.jointDist(j1,j3)
-        l3 = intermediate_link_1.jointDist(j2,j4)
-        l4 = intermediate_link_2.jointDist(j3,j4)
-
-        R1 = np.array([[j1_pos[0][0] + l2*np.cos(q[0])],[j1_pos[1][0] + l2*np.sin(q[0])]])
-        R2 = np.array([[j2_pos[0][0]],[j2_pos[1][0]]])
+        R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
+        R2 = np.array([[self.j2_pos[0][0]],[self.j2_pos[1][0]]])
 
         j3_pos = R1
-        j4_pos = self.__circle_intersection(R1, R2, l4, l3, mode)
+        j4_pos = self.__circle_intersection(R1, R2, self.l4, self.l3, mode)
 
-        if   outputJoint == j1: return self.__HMpose(j1_pos,np.arctan2((j3_pos[1][0] - j1_pos[1][0]),(j3_pos[0][0] - j1_pos[0][0])))
-        elif outputJoint == j2: return self.__HMpose(j2_pos,np.arctan2((j4_pos[1][0] - j2_pos[1][0]),(j4_pos[0][0] - j2_pos[0][0])))
-        elif outputJoint == j3: return self.__HMpose(j3_pos,np.arctan2((j4_pos[1][0] - j3_pos[1][0]),(j4_pos[0][0] - j3_pos[0][0])))
-        elif outputJoint == j4: return self.__HMpose(j4_pos,np.arctan2((j4_pos[1][0]),(j4_pos[0][0])))
+        if   outputJoint == self.j1: return self.__HMpose(self.j1_pos,np.arctan2((j3_pos[1][0] - self.j1_pos[1][0]),(j3_pos[0][0] - self.j1_pos[0][0])))
+        elif outputJoint == self.j2: return self.__HMpose(self.j2_pos,np.arctan2((j4_pos[1][0] - self.j2_pos[1][0]),(j4_pos[0][0] - self.j2_pos[0][0])))
+        elif outputJoint == self.j3: return self.__HMpose(j3_pos,np.arctan2((j4_pos[1][0] - j3_pos[1][0]),(j4_pos[0][0] - j3_pos[0][0])))
+        elif outputJoint == self.j4: return self.__HMpose(j4_pos,np.arctan2((j4_pos[1][0]),(j4_pos[0][0])))
         else:
-            if   outputJoint in fix_link.jointName           :  return fix_link.jointPosition(outputJoint)
-            elif outputJoint in input_link.jointName         :  target_link = input_link         ; base_joint_pos = j1_pos; direction_joint_pos = j3_pos; original_orien = target_link.jointOrien(j1,j3); base_joint = j1
-            elif outputJoint in intermediate_link_1.jointName:  target_link = intermediate_link_1; base_joint_pos = j2_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(j2,j4); base_joint = j2
-            elif outputJoint in intermediate_link_2.jointName:  target_link = intermediate_link_2; base_joint_pos = j3_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(j3,j4); base_joint = j3
+            if   outputJoint in self.fix_link.jointName           :  return self.fix_link.jointPosition(outputJoint)
+            elif outputJoint in self.input_link.jointName         :  target_link = self.input_link         ; base_joint_pos = self.j1_pos; direction_joint_pos = j3_pos; original_orien = target_link.jointOrien(self.j1,self.j3); base_joint = self.j1
+            elif outputJoint in self.intermediate_link_1.jointName:  target_link = self.intermediate_link_1; base_joint_pos = self.j2_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(self.j2,self.j4); base_joint = self.j2
+            elif outputJoint in self.intermediate_link_2.jointName:  target_link = self.intermediate_link_2; base_joint_pos = j3_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(self.j3,self.j4); base_joint = self.j3
             else:                                               raise ValueError(f'Something went wrong.')
             
             orien = np.arctan2((direction_joint_pos[1][0] - base_joint_pos[1][0]),(direction_joint_pos[0][0] - base_joint_pos[0][0]))
@@ -199,49 +227,24 @@ class closedLoopMani():
             return self.__HMpose(base_joint_pos + rotated_relative_position,angle)
     
     def __fk5(self, q, outputJoint, mode = "positive"):
-        fix_link = self.links[self.links_type.index('fixed')]
-        input_link_1 = self.links[self.links_type.index('input')]
-        input_link_2 = self.links[self.links_type.index('input',self.links_type.index('input')+1)]
-
-        intermediate_link = self.links.copy()
-        intermediate_link.remove(fix_link)
-        intermediate_link.remove(input_link_1)
-        intermediate_link.remove(input_link_2)
-
-        j1, j1_pos, j1_refDist = fix_link.connect(input_link_1)
-        j2, j2_pos, j2_refDist = fix_link.connect(input_link_2)
-        for Link in intermediate_link:
-            if input_link_1.is_connectable(Link):
-                j3 = input_link_1.connect(Link)[0]
-                intermediate_link_1 = Link
-            if input_link_2.is_connectable(Link):
-                j4 = input_link_2.connect(Link)[0]
-                intermediate_link_2 = Link
-        j5 = intermediate_link[0].connect(intermediate_link[1])[0]
-
-        l2 = input_link_1.jointDist(j1,j3)
-        l3 = input_link_2.jointDist(j2,j4)
-        l4 = intermediate_link_1.jointDist(j3,j5)
-        l5 = intermediate_link_2.jointDist(j4,j5)
-
-        R1 = np.array([[j1_pos[0][0] + l2*np.cos(q[0])],[j1_pos[1][0] + l2*np.sin(q[0])]])
-        R2 = np.array([[j2_pos[0][0] + l3*np.cos(q[1])],[j2_pos[1][0] + l3*np.sin(q[1])]])
+        R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
+        R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q[1])],[self.j2_pos[1][0] + self.l3*np.sin(q[1])]])
 
         j3_pos = R1
         j4_pos = R2
-        j5_pos = self.__circle_intersection(R1, R2, l4, l5, mode)
+        j5_pos = self.__circle_intersection(R1, R2, self.l4, self.l5, mode)
 
-        if   outputJoint == j1: return self.__HMpose(j1_pos,np.arctan2((j3_pos[1][0] - j1_pos[1][0]),(j3_pos[0][0] - j1_pos[0][0])))
-        elif outputJoint == j2: return self.__HMpose(j2_pos,np.arctan2((j4_pos[1][0] - j2_pos[1][0]),(j4_pos[0][0] - j2_pos[0][0])))
-        elif outputJoint == j3: return self.__HMpose(j3_pos,np.arctan2((j5_pos[1][0] - j3_pos[1][0]),(j5_pos[0][0] - j3_pos[0][0])))
-        elif outputJoint == j4: return self.__HMpose(j4_pos,np.arctan2((j5_pos[1][0] - j4_pos[1][0]),(j5_pos[0][0] - j4_pos[0][0])))
-        elif outputJoint == j5: return self.__HMpose(j5_pos,np.arctan2((j5_pos[1][0]),(j5_pos[0][0])))
+        if   outputJoint == self.j1: return self.__HMpose(self.j1_pos,np.arctan2((j3_pos[1][0] - self.j1_pos[1][0]),(j3_pos[0][0] - self.j1_pos[0][0])))
+        elif outputJoint == self.j2: return self.__HMpose(self.j2_pos,np.arctan2((j4_pos[1][0] - self.j2_pos[1][0]),(j4_pos[0][0] - self.j2_pos[0][0])))
+        elif outputJoint == self.j3: return self.__HMpose(j3_pos,np.arctan2((j5_pos[1][0] - j3_pos[1][0]),(j5_pos[0][0] - j3_pos[0][0])))
+        elif outputJoint == self.j4: return self.__HMpose(j4_pos,np.arctan2((j5_pos[1][0] - j4_pos[1][0]),(j5_pos[0][0] - j4_pos[0][0])))
+        elif outputJoint == self.j5: return self.__HMpose(j5_pos,np.arctan2((j5_pos[1][0]),(j5_pos[0][0])))
         else:
-            if   outputJoint in fix_link.jointName           :  return fix_link.jointPosition(outputJoint)
-            elif outputJoint in input_link_1.jointName       :  target_link = input_link_1       ; base_joint_pos = j1_pos; direction_joint_pos = j3_pos; original_orien = target_link.jointOrien(j1,j3); base_joint = j1
-            elif outputJoint in input_link_2.jointName       :  target_link = input_link_2       ; base_joint_pos = j2_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(j2,j4); base_joint = j2
-            elif outputJoint in intermediate_link_1.jointName:  target_link = intermediate_link_1; base_joint_pos = j3_pos; direction_joint_pos = j5_pos; original_orien = target_link.jointOrien(j3,j5); base_joint = j3
-            elif outputJoint in intermediate_link_2.jointName:  target_link = intermediate_link_2; base_joint_pos = j4_pos; direction_joint_pos = j5_pos; original_orien = target_link.jointOrien(j4,j5); base_joint = j4
+            if   outputJoint in self.fix_link.jointName           :  return self.fix_link.jointPosition(outputJoint)
+            elif outputJoint in self.input_link_1.jointName       :  target_link = self.input_link_1       ; base_joint_pos = self.j1_pos; direction_joint_pos = j3_pos; original_orien = target_link.jointOrien(self.j1,self.j3); base_joint = self.j1
+            elif outputJoint in self.input_link_2.jointName       :  target_link = self.input_link_2       ; base_joint_pos = self.j2_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(self.j2,self.j4); base_joint = self.j2
+            elif outputJoint in self.intermediate_link_1.jointName:  target_link = self.intermediate_link_1; base_joint_pos = j3_pos; direction_joint_pos = j5_pos; original_orien = target_link.jointOrien(self.j3,self.j5); base_joint = self.j3
+            elif outputJoint in self.intermediate_link_2.jointName:  target_link = self.intermediate_link_2; base_joint_pos = j4_pos; direction_joint_pos = j5_pos; original_orien = target_link.jointOrien(self.j4,self.j5); base_joint = self.j4
             else:                                               raise ValueError(f'Something went wrong.')
             
             orien = np.arctan2((direction_joint_pos[1][0] - base_joint_pos[1][0]),(direction_joint_pos[0][0] - base_joint_pos[0][0]))
@@ -310,80 +313,32 @@ class closedLoopMani():
         return T * Rz
     
     def boundary4(self):
-        fix_link = self.links[self.links_type.index('fixed')]
-        input_link = self.links[self.links_type.index('input')]
-
-        intermediate_link = self.links.copy()
-        intermediate_link.remove(fix_link)
-        intermediate_link.remove(input_link)
-
-        j1, j1_pos, j1_refDist = fix_link.connect(input_link)
-        for Link in intermediate_link:
-            if fix_link.is_connectable(Link):
-                j2, j2_pos, j2_refDist = fix_link.connect(Link)
-                intermediate_link_1 = Link
-            if input_link.is_connectable(Link):
-                j3 = input_link.connect(Link)[0]
-                intermediate_link_2 = Link
-        j4 = intermediate_link[0].connect(intermediate_link[1])[0]
-
-        l1 = fix_link.jointDist(j1,j2)
-        l2 = input_link.jointDist(j1,j3)
-        l3 = intermediate_link_1.jointDist(j2,j4)
-        l4 = intermediate_link_2.jointDist(j3,j4)
-
-        if l1+l2 < l3+l4:
+        if self.l1+self.l2 < self.l3+self.l4:
             q_min = 0
             q_max = 2 * np.pi
         else:
-            q_max_pos = self.__circle_intersection(j1_pos, j2_pos, l2, l3+l4, "positive")
-            q_min_pos = self.__circle_intersection(j1_pos, j2_pos, l2, l3+l4, "negative")
+            q_max_pos = self.__circle_intersection(self.j1_pos, self.j2_pos, self.l2, self.l3+self.l4, "positive")
+            q_min_pos = self.__circle_intersection(self.j1_pos, self.j2_pos, self.l2, self.l3+self.l4, "negative")
 
             q_min = np.arctan2(q_min_pos[1][0],q_min_pos[0][0])
             q_max = np.arctan2(q_max_pos[1][0],q_max_pos[0][0])
 
-        return [q_min,q_max]
+        return (q_min,q_max)
     
     def boundary5(self, res = 0.01):
-        fix_link = self.links[self.links_type.index('fixed')]
-        input_link_1 = self.links[self.links_type.index('input')]
-        input_link_2 = self.links[self.links_type.index('input',self.links_type.index('input')+1)]
-
-        intermediate_link = self.links.copy()
-        intermediate_link.remove(fix_link)
-        intermediate_link.remove(input_link_1)
-        intermediate_link.remove(input_link_2)
-
-        j1, j1_pos, j1_refDist = fix_link.connect(input_link_1)
-        j2, j2_pos, j2_refDist = fix_link.connect(input_link_2)
-        for Link in intermediate_link:
-            if input_link_1.is_connectable(Link):
-                j3 = input_link_1.connect(Link)[0]
-                intermediate_link_1 = Link
-            if input_link_2.is_connectable(Link):
-                j4 = input_link_2.connect(Link)[0]
-                intermediate_link_2 = Link
-        j5 = intermediate_link[0].connect(intermediate_link[1])[0]
-
-        l1 = fix_link.jointDist(j1,j2)
-        l2 = input_link_1.jointDist(j1,j3)
-        l3 = input_link_2.jointDist(j2,j4)
-        l4 = intermediate_link_1.jointDist(j3,j5)
-        l5 = intermediate_link_2.jointDist(j4,j5)
-
-        if l1+l2 < l3+l4+l5:
+        if self.l1+self.l2 < self.l3+self.l4+self.l5:
             q1_min = 0
             q1_max = 2 * np.pi
         else:
-            q1_min = -np.arccos(((l1**2)+(l2**2)-((l3+l4+l5)**2))/(2*l1*l2))
-            q1_max = np.arccos(((l1**2)+(l2**2)-((l3+l4+l5)**2))/(2*l1*l2))
+            q1_min = -np.arccos(((self.l1**2)+(self.l2**2)-((self.l3+self.l4+self.l5)**2))/(2*self.l1*self.l2))
+            q1_max = np.arccos(((self.l1**2)+(self.l2**2)-((self.l3+self.l4+self.l5)**2))/(2*self.l1*self.l2))
 
-        if l1+l3 < l2+l4+l5:
+        if self.l1+self.l3 < self.l2+self.l4+self.l5:
             q2_min = 0
             q2_max = 2 * np.pi
         else:
-            q2_min = -np.arccos(((l1**2)+(l3**2)-((l2+l4+l5)**2))/(2*l1*l3))
-            q2_max = np.arccos(((l1**2)+(l3**2)-((l2+l4+l5)**2))/(2*l1*l3))
+            q2_min = -np.arccos(((self.l1**2)+(self.l3**2)-((self.l2+self.l4+self.l5)**2))/(2*self.l1*self.l3))
+            q2_max = np.arccos(((self.l1**2)+(self.l3**2)-((self.l2+self.l4+self.l5)**2))/(2*self.l1*self.l3))
         
         Cspace = []
         q1_space = []
@@ -391,9 +346,9 @@ class closedLoopMani():
         for q2 in range (int(2*np.pi/res)):
             CspaceRow = []
             for q1 in range (int(2*np.pi/res)):
-                R1 = np.array([[j1_pos[0][0] + l2*np.cos(q1*res)],[j1_pos[1][0] + l2*np.sin(q1*res)]])
-                R2 = np.array([[j2_pos[0][0] + l3*np.cos(q2*res)],[j2_pos[1][0] + l3*np.sin(q2*res)]])
-                if self.is_circle_intersection(R1, R2, l4, l5) == True: # Intersected
+                R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1*res)],[self.j1_pos[1][0] + self.l2*np.sin(q1*res)]])
+                R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2*res)],[self.j2_pos[1][0] + self.l3*np.sin(q2*res)]])
+                if self.is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
                     CspaceRow.append(255)
                     q1_space.append(q1*res)
                     q2_space.append(q2*res)
@@ -404,7 +359,11 @@ class closedLoopMani():
         
         Cspace_reshaped = Cspace[:, :, np.newaxis]
         Cspace_reshaped = np.concatenate((Cspace_reshaped, Cspace_reshaped, Cspace_reshaped), axis=2)
-        
+
+        return Cspace_reshaped, q1_space, q2_space
+    
+    def plot_boundary5(self, res = 0.01):
+        Cspace_reshaped, q1_space, q2_space = self.boundary5(res)
         plt.imshow(Cspace_reshaped, aspect='equal',origin='lower',extent=(0, int(2*np.pi/res)*res, 0, int(2*np.pi/res)*res))
         plt.xlabel('q1')
         plt.ylabel('q2')
@@ -412,8 +371,6 @@ class closedLoopMani():
         plt.yticks([0,int(np.pi/(2*res))*res,int(np.pi/res)*res,int(3*np.pi/(2*res))*res,int(2*np.pi/res)*res],[0,'π/2','π','3π/2','2π'])
         plt.grid(False)
         plt.show()
-
-        return Cspace_reshaped, q1_space, q2_space
     
     def minmax4(self, mode:str):
         posFilter = np.array([[0],[0],[0],[1]])
@@ -441,21 +398,35 @@ class closedLoopMani():
         minmax = [minx,maxx,miny,maxy]
         return minmax
     
-    def ik(self, T_desired : (list,np.ndarray), outputJoint:str, mode:str, tol:float):
+    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'positive', tol = 0.01, method = 'numerical'):
         if self.nlinks == 4:
-            return self.__ik4(T_desired, outputJoint,tol,mode)
+            if method == 'numerical':
+                return self.__ik4_num(T_desired, outputJoint, tol)
+            elif method == 'geometrical':
+                return self.__ik4_geo(T_desired, outputJoint, mode, tol)
+            else: 
+                raise ValueError(f'Unavailable method.')
         if self.nlinks == 5:
-            return self.__ik5(T_desired, outputJoint, tol,mode)
-            
-    def __ik4(self, T_desired, outputJoint,tol,mode):
+            if method == 'numerical':
+                return self.__ik5_num(T_desired, outputJoint, mode, tol)
+            elif method == 'geometrical':
+                if mode == 'positive':
+                    mode = '++'
+                elif mode == 'negative':
+                    mode = '--'
+                return self.__ik5_geo(T_desired, outputJoint, mode, tol)
+            else: 
+                raise ValueError(f'Unavailable method.')
+    
+    def __ik4_num(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
         boundary = self.boundary4()
-        initial_guess = [[np.pi/4]]
+        initial_guess = [boundary[0]]
 
         def _objective(q):
-            T_actual = self.fk(q,outputJoint,mode)
+            T_actual = self.fk(q,outputJoint)
             return np.linalg.norm(T_actual.A[0:2,3] - T_desired)
         
         q_min = boundary[0]
@@ -463,22 +434,40 @@ class closedLoopMani():
         for init_guess in initial_guess:
             result = minimize(_objective,init_guess, bounds=[(q_min, q_max) for _ in initial_guess])
         
+        print('Debug:',_objective(result.x))
         if tol >= _objective(result.x) :
-            return result.x
+            return result.x[0]
         else :
             raise ValueError(f'T_desired is out of workspace')
-        
-    def __ik5(self, T_desired, outputJoint, tol,mode):
+
+    def __ik4_geo(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
+        if outputJoint == self.j1 or outputJoint == self.j2:
+            raise ValueError(f'Specified outputJoint are on fixed link.')
+        elif outputJoint == self.j3:
+            if np.linalg.norm(T_desired - self.j1_pos) > self.l2 - tol and np.linalg.norm(T_desired - self.j1_pos) < self.l2 + tol:
+                check = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l4, mode)
+                q1_neg, q1_pos = np.arccos((T_desired - self.j1_pos)[0][0],np.linalg.norm(T_desired - self.j1_pos))
+                if T_desired[1][0] > 0: return q1_pos
+                else: return q1_neg
+            else:
+                raise ValueError(f'T_desired is out of workspace')
+        elif outputJoint == self.j4:
+            if np.linalg.norm(T_desired - self.j2_pos) >= self.l3 - tol and np.linalg.norm(T_desired - self.j2_pos) < self.l3 + tol:
+                q1, q3 = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode)
+                return q1
+            else:
+                raise ValueError(f'T_desired is out of workspace')
+    
+    def __ik5_num(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
-        C_space, q1_space, q2_space = self.boundary5()
-        # initial_guess = [[np.pi/4],[np.pi/4]]
+        Cspace_reshaped, q1_space, q2_space = self.boundary5()
         error = []
 
         for i in range (len(q1_space)):
             q = [q1_space[i], q2_space[i]]
-            T_actual = self.fk(q, outputJoint)
+            T_actual = self.fk(q, outputJoint, mode = 'positive')
             error.append(np.linalg.norm(T_actual.A[0:2,3] - T_desired))
 
         if tol >= min(error):
@@ -487,6 +476,46 @@ class closedLoopMani():
             return result
         else:
             raise ValueError(f'T_desired is out of workspace')
+        
+    def __ik5_geo(self, T_desired, outputJoint, mode = '++', tol = 0.01):
+        if outputJoint != self.j5:
+            raise ValueError(f'Geometric method for solving inverse kinematics of 5 bars closed-loop manipulator only capable of solving for end-effector position.')
+
+        if mode == '++':
+            mode1 = 'positive'
+            mode2 = 'negative'
+        elif mode == '+-':
+            mode1 = 'positive'
+            mode2 = 'positive'
+        elif mode == '-+':
+            mode1 = 'negative'
+            mode2 = 'negative'
+        elif mode == '--':
+            mode1 = 'negative'
+            mode2 = 'positive'
+
+        q1, q3 = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode1)
+        q2, q4 = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l5, mode2)
+
+        return [q1, q2]
+
+    def __ik2link(self, origin: np.ndarray, endEffector: np.ndarray , l1: (int, float), l2: (int, float),mode: str = 'up'):
+        if np.linalg.norm(endEffector - origin) > (l1 + l2):
+            raise ValueError(f'T_desired is out of workspace')
+        
+        c2 = (- l1**2 - l2**2 + np.linalg.norm(endEffector - origin)**2)/(2*l1*l2)
+        if mode == 'negative':
+            s2 = np.sqrt(1 - c2**2)
+        elif mode == 'positive':
+            s2 = - np.sqrt(1 - c2**2)
+        else:
+            raise ValueError(f'Mode must be only "positive" or "negative". Current mode: {mode}')
+        cs1 = np.array([[l1 + l2*c2, l2*s2],[-l2*s2, l1 + l2*c2]])/((l1 + l2*c2)**2 + (l2*s2)**2) @ (endEffector - origin)
+
+        q1 = np.arctan2(cs1[1][0],cs1[0][0])
+        q2 = np.arctan2(s2,c2)
+
+        return (q1, q2)
          
     def __plotLink(self,jointCoordinates:list):
         x_coords = []
@@ -630,124 +659,95 @@ class closedLoopMani():
         plt.show()
         
     def cost_intersection5(self, q1:float, q2:float):
-        fix_link = self.links[self.links_type.index('fixed')]
-        input_link_1 = self.links[self.links_type.index('input')]
-        input_link_2 = self.links[self.links_type.index('input',self.links_type.index('input')+1)]
-
-        intermediate_link = self.links.copy()
-        intermediate_link.remove(fix_link)
-        intermediate_link.remove(input_link_1)
-        intermediate_link.remove(input_link_2)
-
-        j1, j1_pos, j1_refDist = fix_link.connect(input_link_1)
-        j2, j2_pos, j2_refDist = fix_link.connect(input_link_2)
-        for Link in intermediate_link:
-            if input_link_1.is_connectable(Link):
-                j3 = input_link_1.connect(Link)[0]
-                intermediate_link_1 = Link
-            if input_link_2.is_connectable(Link):
-                j4 = input_link_2.connect(Link)[0]
-                intermediate_link_2 = Link
-        j5 = intermediate_link[0].connect(intermediate_link[1])[0]
-
-        l1 = fix_link.jointDist(j1,j2)
-        l2 = input_link_1.jointDist(j1,j3)
-        l3 = input_link_2.jointDist(j2,j4)
-        l4 = intermediate_link_1.jointDist(j3,j5)
-        l5 = intermediate_link_2.jointDist(j4,j5)
-        R1 = np.array([[j1_pos[0][0] + l2*np.cos(q1)],[j1_pos[1][0] + l2*np.sin(q1)]])
-        R2 = np.array([[j2_pos[0][0] + l3*np.cos(q2)],[j2_pos[1][0] + l3*np.sin(q2)]])
-        if self.is_circle_intersection(R1, R2, l4, l5) == True: # Intersected
+        R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1)],[self.j1_pos[1][0] + self.l2*np.sin(q1)]])
+        R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2)],[self.j2_pos[1][0] + self.l3*np.sin(q2)]])
+        if self.is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
             cost = 1
         else: # Not Intersected
-            cost = 1000000  
+            cost = 1000000 
             
         return cost
     
-    def heuristic(self, current, goal):
-        # Simple Euclidean distance can be used as a heuristic
-        return np.linalg.norm(np.array(current) - np.array(goal))
+    def grid_heuristic(self, start:list, goal:list):
+        return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
     
-    def __get_neighbors(self, node:list, res:float):
+    def grid_neighbors(self, node:list, res:float):
         neighbors = []
         x, y = node
-
-        # Possible neighboring configurations
+        multiplier = 100
+        # possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
         possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
-
         for neighbor in possible_neighbors:
-            if 0 <= neighbor[0] < np.pi*2 and 0 <= neighbor[1] < np.pi*2:
+            if 0 <= neighbor[0] < np.pi*2*multiplier and 0 <= neighbor[1] < np.pi*2*multiplier:
                 neighbors.append(neighbor)
 
         return neighbors
     
-    # def a_star(self, start:list, goal:list, outputJoint:str, mode:str):
-    
-    # def a_star(self, start:list, goal:list, res:float):
-    
-    def a_star(self, start:list, goal:list, outputJoint:str, mode:str):
-        # q_startik = self.ik(start, outputJoint, mode, 0.05)
-        q_start = tuple(start)
+    def a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):
+        def make_node(state, parent=None, cost=0, heuristic=0):
+            return (tuple(state), parent, cost, heuristic)
+
+        open_set = []
+        closed_set = set()
+
+        heuristic_fn = self.grid_heuristic(start, goal)
+        start_node = make_node(start, cost=0, heuristic=heuristic_fn)
+
+        heapq.heappush(open_set, (0, start_node))
+        start = tuple(start)
         goal = tuple(goal)
 
-        priority_queue = [(0, goal)]
-        came_from = {}
-        cost_so_far = {q_start: 0}
-        
-        while priority_queue:
-            current_cost, current_node = heapq.heappop(priority_queue)
+        while open_set:
+            current_cost, current_node = heapq.heappop(open_set)
 
-        # Check if inverse kinematics can be calculated for the current node
-            if not self.is_ik_possible(current_node, outputJoint, mode, 0.01):
-                continue
+            if current_node[0] == goal:
+                path = []
+                while current_node:
+                    path.append(list(current_node[0]))  # Convert back to list for the final path
+                    current_node = current_node[1]
+                return path[::-1]
+                # return current_node
 
-            q = self.ik(current_node, outputJoint, mode, 0.01)
-            cost_so_far[current_node] = cost_so_far.get(current_node, 0) + self.cost_intersection5(self, q[0], q[1])
+            closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set
 
-            if current_node == goal:
-                value = 1 
-                path = [current_node]
-                while current_node in came_from:
-                    current_node = came_from[current_node]
-                    path.append(current_node)
-                    value = 2
-                path.reverse()
-                return path
-
-            for neighbor in self.__get_neighbors(current_node, 0.01):
-                # Check if inverse kinematics can be calculated for the neighbor
-                if not self.is_ik_possible(neighbor, outputJoint, mode, 0.01):
+            for neighbor in self.grid_neighbors(list(current_node[0]), res):  # Convert to list for the grid_neighbors call
+                if tuple(neighbor) in closed_set:
                     continue
+                cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
+                cost = current_node[2] + cost_next
+                # cost = current_node[2] + self.cost_intersection5(*current_node[0], *neighbor)
+                # print("current_node : ",current_node[0])
+                heuristic_fn = self.grid_heuristic(neighbor, goal)
+                new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic_fn)
 
-                new_cost = cost_so_far[current_node] + self.cost_intersection5(self, q[0], q[1])
+                if all(tuple(neighbor) != node[0] for _, node in open_set):
+                    heapq.heappush(open_set, (cost + heuristic_fn, new_node))
+                elif cost < next(cost for c, n in open_set if n[0] == tuple(neighbor)):
+                    open_set = [(c, n) if n[0] != tuple(neighbor) else (cost + heuristic_fn, new_node) for c, n in open_set]
 
-                if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
-                    cost_so_far[neighbor] = new_cost
-                    priority = new_cost + self.heuristic(neighbor, goal)
-                    heapq.heappush(priority_queue, (priority, neighbor))
-                    came_from[neighbor] = current_node
-                value = 0
         return None
 
     def is_ik_possible(self, node, outputJoint, mode, tolerance):
         try:
-            self.ik(node, outputJoint, mode, tolerance)
+            self.ik(node, outputJoint, mode, tolerance, method = 'geometrical')
             return True
         except ValueError:
             return False
         
-    def plan_path(self, start:list, goal:list, outputJoint:str, mode:str):
+    def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
         Cspace_reshaped, q1_space, q2_space = self.boundary5()
-        q_start = np.array(self.ik(start, outputJoint, mode, 0.05))
-        q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05))
+        q_start = np.array(self.ik(start, outputJoint, mode, 0.05, method = 'geometrical'))
+        q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05, method = 'geometrical'))
         
         start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
         goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
         
-        start = [q1_space[start_index[0]], q2_space[start_index[1]]]
-        goal = [q1_space[goal_index[0]], q2_space[goal_index[1]]]
+        num_round = 2
+        multiplier = 100
+        start = [round(q1_space[start_index[0]],num_round)*multiplier, round(q2_space[start_index[1]],num_round)*multiplier]
+        goal = [round(q1_space[goal_index[0]],num_round)*multiplier, round(q2_space[goal_index[1]],num_round)*multiplier]
         
-        path_indices = self.a_star(start, goal, outputJoint, mode)
+        path_indices = self.a_star(start, goal, outputJoint, mode,res)
         
         # path_indices = self.a_star(start_index, goal_index, outputJoint, mode)
         return path_indices
@@ -758,99 +758,3 @@ class closedLoopMani():
         #     return None
         
         
-    # def plan_path(self, start, goal):
-    #     start_index = (np.argmin(np.abs(self.q1_space - start[0])), np.argmin(np.abs(self.q2_space - start[1])))
-    #     goal_index = (np.argmin(np.abs(self.q1_space - goal[0])), np.argmin(np.abs(self.q2_space - goal[1])))
-
-    #     path_indices = self.a_star(start_index, goal_index)
-
-    #     if path_indices:
-    #         path = [(self.q1_space[index[0]], self.q2_space[index[1]]) for index in path_indices]
-    #         return path
-    #     else:
-    #         return None
-    
-    # def path_planning5(self, start:list, stop:list, output_joint:str, mode:str, tol:float, res:float):
-        
-    #     heuristic = np.linalg.norm(np.array(current) - np.array(goal))
-    #     q = self.ik(start,output_joint,mode,0.01)
-    #     cost = self.cost_intersection5(q[0],q[1])
-    
-    # path planning 5 bar
-    # def __settingvariablepath(self, c_space, q1_space, q2_space, cost_function):
-    #     self.c_space = c_space
-    #     self.q1_space = q1_space
-    #     self.q2_space = q2_space
-    #     self.cost_function = cost_function
-        
-    # def heuristic(self, current:list, goal:list):
-    #     return np.linalg.norm(np.array(current) - np.array(goal))
-    
-    # def get_neighbors(self, node):
-    #     neighbors = []
-    #     x, y = node
-
-    #     # Possible neighboring configurations
-    #     possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-
-    #     for neighbor in possible_neighbors:
-    #         if 0 <= neighbor[0] < len(self.q1_space) and 0 <= neighbor[1] < len(self.q2_space):
-    #             neighbors.append(neighbor)
-
-    #     return neighbors
-    
-    # def a_star(self, start, goal):
-    #     priority_queue = [(0, start)]
-    #     came_from = {}
-    #     cost_so_far = {start: 0}
-
-    #     while priority_queue:
-    #         current_cost, current_node = heapq.heappop(priority_queue)
-
-    #         if current_node == goal:
-    #             path = [current_node]
-    #             while current_node in came_from:
-    #                 current_node = came_from[current_node]
-    #                 path.append(current_node)
-    #             path.reverse()
-    #             return path
-
-    #         for neighbor in self.get_neighbors(current_node):
-    #             new_cost = cost_so_far[current_node] + self.cost_function(current_node, neighbor)
-    #             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
-    #                 cost_so_far[neighbor] = new_cost
-    #                 priority = new_cost + self.heuristic(neighbor, goal)
-    #                 heapq.heappush(priority_queue, (priority, neighbor))
-    #                 came_from[neighbor] = current_node
-
-    #     return None
-    
-    # def plan_path(self, start, goal):
-    #     start_index = (np.argmin(np.abs(self.q1_space - start[0])), np.argmin(np.abs(self.q2_space - start[1])))
-    #     goal_index = (np.argmin(np.abs(self.q1_space - goal[0])), np.argmin(np.abs(self.q2_space - goal[1])))
-
-    #     path_indices = self.a_star(start_index, goal_index)
-
-    #     if path_indices:
-    #         path = [(self.q1_space[index[0]], self.q2_space[index[1]]) for index in path_indices]
-    #         return path
-    #     else:
-    #         return None
-        
-    # def cost_function(self, current, neighbor):
-    #     q1_current, q2_current = current
-    #     q1_neighbor, q2_neighbor = neighbor
-
-    #     # Convert indices to angles
-    #     angle_current = (q1_current, q2_current)
-    #     angle_neighbor = (q1_neighbor, q2_neighbor)
-
-    #     # Evaluate cost based on the condition
-    #     if self.is_circle_intersection(angle_current, angle_neighbor):
-    #         return 1
-    #     else:
-    #         return 1000000
-
-        
-    # def path_planning5(self, start:list, stop:list, mode:str, res:float):
-    #     if 

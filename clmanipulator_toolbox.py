@@ -652,6 +652,8 @@ class closedLoopMani():
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)
                 self.__plotLink(jointCoor)
+            if frame == len(path) - 1:
+                animation.event_source.stop()
 
         # Create the animation
         frames = len(path)
@@ -665,40 +667,49 @@ class closedLoopMani():
         for q_num in range(len(traj_q)):
             q1.append([traj_q[q_num][0]])
             q2.append([traj_q[q_num][1]])
+            
+        q1_values = [point[0] for point in traj_q]
+        q2_values = [point[1] for point in traj_q]
         q1 = np.array(q1)
         q2 = np.array(q2)
         q_all = np.array(traj_q)
-        return q1, q2, q_all, traj_q
+        return q1, q2, q_all, traj_q,q1_values,q2_values
     
     def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
-        pathq1,pathq2,traj_q = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
+        q1, q2, q_all, traj_q,q1_values,q2_values = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
+        frames = len(q1)
         posFilter = np.array([[0], [0], [0], [1]])
-        ax.set_xlim(-10,10)  # set x-axis limits 
-        ax.set_ylim(-10,10)  # set y-axis limits 
-
+        ax.set_xlim(-20,80)
+        ax.set_ylim(-20,80)
         def update(frame):
             ax.clear()  # Clear the previous frame
             plt.grid(True)
             plt.axis('equal')
-            ax.set_xlim(-10,10)  # Reset x-axis limits in 
-            ax.set_ylim(-10,10)  # Reset y-axis limits in
-            q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
-            q2 = [pathq2[frame][0]]
+            ax.set_xlim(-20,80)
+            ax.set_ylim(-20,80)
+            # q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
+            # q2 = [pathq2[frame][0]]
+            q1 = q1_values[frame]
+            q2 = q2_values[frame]
             q_all = [traj_q[frame][0]]
             for Link in self.links:
                 jointCoor = []
                 for Joint in Link.jointName:
-                    output = self.fk([0,q2], Joint, mode = "positive")
+                    output = self.fk([q1,q2], Joint, mode = "positive")
                     D = output.A @ posFilter
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)
                 self.__plotLink(jointCoor)
+                
+            if frame == len(traj_q) - 1:
+                animation.event_source.stop()  # Stop the animation
+            # return robot_plot,
 
         # Create the animation
-        frames = len(pathq1)
+        frames = len(q1)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         

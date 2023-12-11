@@ -682,14 +682,14 @@ class closedLoopMani():
         q1, q2, q_all, traj_q,q1_values,q2_values = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
         frames = len(q1)
         posFilter = np.array([[0], [0], [0], [1]])
-        ax.set_xlim(-20,80)
-        ax.set_ylim(-20,80)
+        ax.set_xlim(-10,10)
+        ax.set_ylim(-10,10)
         def update(frame):
             ax.clear()  # Clear the previous frame
             plt.grid(True)
             plt.axis('equal')
-            ax.set_xlim(-20,80)
-            ax.set_ylim(-20,80)
+            ax.set_xlim(-10,10)
+            ax.set_ylim(-10,10)
             # q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
             # q2 = [pathq2[frame][0]]
             q1 = q1_values[frame]
@@ -733,9 +733,28 @@ class closedLoopMani():
         # possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
         possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
         for neighbor in possible_neighbors:
-            if 0 <= neighbor[0] < np.pi*2*multiplier and 0 <= neighbor[1] < np.pi*2*multiplier:
-                neighbors.append(neighbor)
+            # if 0 <= neighbor[0] <= np.pi*2*multiplier and 0 <= neighbor[1] <= np.pi*2*multiplier:
+            #     neighbors.append(neighbor)
 
+            neighbor0 = neighbor[0]
+            neighbor1 = neighbor[1]
+            # if 0 <= neighbor0 <= np.pi*2*multiplier and 0 <= neighbor1 <= np.pi*2*multiplier:
+            #     continue
+                # neighbor[0] = neighbor[0]
+                # neighbor[1] = neighbor[1]
+            if 0 > neighbor0:
+                neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
+                # neighbor[1] = neighbor[1]
+            if neighbor0 > np.pi*2*multiplier :
+                neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
+                # neighbor[1] = neighbor[1]
+            if  0 > neighbor1:
+                # neighbor[0] = neighbor[0]
+                neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
+            if neighbor1 > np.pi*2*multiplier:
+                # neighbor[0] = neighbor[0]
+                neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
+            neighbors.append((neighbor0,neighbor1))
         return neighbors
     
     def a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):

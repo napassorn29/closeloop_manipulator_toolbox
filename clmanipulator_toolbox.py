@@ -606,13 +606,13 @@ class closedLoopMani():
     def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         if self.nlinks == 4:
             return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
-        # if self.nlinks == 5:
-            # return self.__fk5(q, outputJoint)
+        if self.nlinks == 5:
+            return self.__animationik5(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
     
-    def __P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+    def P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
         q = q_init
-        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik)
+        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, )
         error = q - q_goal
         while abs(error) > tol:
             error = q - q_goal
@@ -631,7 +631,7 @@ class closedLoopMani():
         plt.axis('equal')
         minmax = self.minmax4(mode)
         bound = self.boundary4()
-        path = self.__P_control_ik4(dt,tol,kp,q_init,taskspace_goal,joint_output,mode,tol_ik)
+        path = self.P_control_ik4(dt,tol,kp,q_init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
         
         ax.set_xlim(minmax[0]-1,minmax[1]+1)  # set x-axis limits 
@@ -655,6 +655,45 @@ class closedLoopMani():
 
         # Create the animation
         frames = len(path)
+        animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
+        plt.show()
+        
+    def P_control_ik5(self, dt: float, tol: float, kp: float, start: list, goal: list, joint_output: str, mode: str, tol_ik: float):
+        traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * 100)
+        q1 = [point[0] if isinstance(point, list) else point for point in traj_q]
+        q2 = [point[1] if isinstance(point, list) else point for point in traj_q]
+
+        return q1, q2, traj_q
+    
+    def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
+        fig, ax = plt.subplots()
+        plt.grid(True)
+        plt.axis('equal')
+        pathq1,pathq2,traj_q = self.__P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
+        posFilter = np.array([[0], [0], [0], [1]])
+        ax.set_xlim(-10,10)  # set x-axis limits 
+        ax.set_ylim(-10,10)  # set y-axis limits 
+
+        def update(frame):
+            ax.clear()  # Clear the previous frame
+            plt.grid(True)
+            plt.axis('equal')
+            ax.set_xlim(-10,10)  # Reset x-axis limits in 
+            ax.set_ylim(-10,10)  # Reset y-axis limits in
+            q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
+            q2 = [pathq2[frame][0]]
+            q_all = [traj_q[frame][0]]
+            for Link in self.links:
+                jointCoor = []
+                for Joint in Link.jointName:
+                    output = self.fk([q1,1.80], Joint, mode)
+                    D = output.A @ posFilter
+                    E = np.array([[D[0][0]], [D[1][0]]])
+                    jointCoor.append(E)
+                self.__plotLink(jointCoor)
+
+        # Create the animation
+        frames = len(pathq1)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
@@ -705,7 +744,9 @@ class closedLoopMani():
                 while current_node:
                     path.append(list(current_node[0]))  # Convert back to list for the final path
                     current_node = current_node[1]
-                return path[::-1]
+                    path_list = path[::-1]
+                    result_list = [[x / 100 for x in inner_list] for inner_list in path_list]
+                return result_list
                 # return current_node
 
             closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set

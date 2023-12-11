@@ -661,19 +661,22 @@ class closedLoopMani():
         plt.show()
     
     def P_control_ik5(self, dt: float, tol: float, kp: float, start: list, goal: list, joint_output: str, mode: str, tol_ik: float):
-        traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * 100)
-        q1 = []
-        q2 = []
-        for q_num in range(len(traj_q)):
-            q1.append([traj_q[q_num][0]])
-            q2.append([traj_q[q_num][1]])
+        count_after_decimal = str(tol_ik)[::-1].find('.')
+        multiplier = 10**(count_after_decimal)
+        traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * multiplier)
+        # q1 = []
+        # q2 = []
+        # for q_num in range(len(traj_q)):
+        #     q1.append([traj_q[q_num][0]])
+        #     q2.append([traj_q[q_num][1]])
             
-        q1_values = [point[0] for point in traj_q]
-        q2_values = [point[1] for point in traj_q]
-        q1 = np.array(q1)
-        q2 = np.array(q2)
-        q_all = np.array(traj_q)
-        return q1, q2, q_all, traj_q,q1_values,q2_values
+        # q1_values = [point[0] for point in traj_q]
+        # q2_values = [point[1] for point in traj_q]
+        # q1 = np.array(q1)
+        # q2 = np.array(q2)
+        # q_all = np.array(traj_q)
+        return traj_q
+        # return q1, q2, q_all, traj_q,q1_values,q2_values
     
     def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
@@ -729,30 +732,21 @@ class closedLoopMani():
     def grid_neighbors(self, node:list, res:float):
         neighbors = []
         x, y = node
-        multiplier = 100
+        count_after_decimal = str(res)[::-1].find('.')
+        # multiplier = 1.0/res
+        multiplier = 10**(count_after_decimal)
         # possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
         possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
         for neighbor in possible_neighbors:
-            # if 0 <= neighbor[0] <= np.pi*2*multiplier and 0 <= neighbor[1] <= np.pi*2*multiplier:
-            #     neighbors.append(neighbor)
-
             neighbor0 = neighbor[0]
             neighbor1 = neighbor[1]
-            # if 0 <= neighbor0 <= np.pi*2*multiplier and 0 <= neighbor1 <= np.pi*2*multiplier:
-            #     continue
-                # neighbor[0] = neighbor[0]
-                # neighbor[1] = neighbor[1]
             if 0 > neighbor0:
                 neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
-                # neighbor[1] = neighbor[1]
             if neighbor0 > np.pi*2*multiplier :
                 neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
-                # neighbor[1] = neighbor[1]
             if  0 > neighbor1:
-                # neighbor[0] = neighbor[0]
                 neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
             if neighbor1 > np.pi*2*multiplier:
-                # neighbor[0] = neighbor[0]
                 neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
             neighbors.append((neighbor0,neighbor1))
         return neighbors
@@ -770,7 +764,8 @@ class closedLoopMani():
         heapq.heappush(open_set, (0, start_node))
         start = tuple(start)
         goal = tuple(goal)
-
+        count_after_decimal = str(res)[::-1].find('.')
+        multiplier = 10**(count_after_decimal)
         while open_set:
             current_cost, current_node = heapq.heappop(open_set)
 
@@ -780,7 +775,7 @@ class closedLoopMani():
                     path.append(list(current_node[0]))  # Convert back to list for the final path
                     current_node = current_node[1]
                     path_list = path[::-1]
-                    result_list = [[x / 100 for x in inner_list] for inner_list in path_list]
+                    result_list = [[x / multiplier for x in inner_list] for inner_list in path_list]
                 return result_list
                 # return current_node
 
@@ -791,6 +786,8 @@ class closedLoopMani():
                     continue
                 cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
                 cost = current_node[2] + cost_next
+                # if cost > 3000000:
+                #     return "no path"
                 # cost = current_node[2] + self.cost_intersection5(*current_node[0], *neighbor)
                 # print("current_node : ",current_node[0])
                 heuristic_fn = self.grid_heuristic(neighbor, goal)
@@ -811,26 +808,22 @@ class closedLoopMani():
             return False
         
     def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
-        Cspace_reshaped, q1_space, q2_space = self.boundary5()
+        Cspace_reshaped, q1_space, q2_space = self.boundary5(res)
         q_start = np.array(self.ik(start, outputJoint, mode, 0.05, method = 'geometrical'))
         q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05, method = 'geometrical'))
         
         start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
         goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
         
-        num_round = 2
-        multiplier = 100
+        count_after_decimal = str(res)[::-1].find('.')
+        num_round = count_after_decimal
+        multiplier = 10**(count_after_decimal)
+        # multiplier = 10**count_after_decimal
         start = [round(q1_space[start_index[0]],num_round)*multiplier, round(q2_space[start_index[1]],num_round)*multiplier]
         goal = [round(q1_space[goal_index[0]],num_round)*multiplier, round(q2_space[goal_index[1]],num_round)*multiplier]
         
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
-        
-        # path_indices = self.a_star(start_index, goal_index, outputJoint, mode)
+
         return path_indices
-        # if path_indices:
-        #     path = [(q1_space[index[0]], q2_space[index[1]]) for index in path_indices]
-        #     return path
-        # else:
-        #     return None
-        
+
         

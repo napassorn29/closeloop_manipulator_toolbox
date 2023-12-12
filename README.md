@@ -37,6 +37,7 @@ from spatialmath import SE3
 - Joint_pos: Position of each joint compared with the first joint in the link.
 
 **Method**
+1: is_connectable()
 
 ### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
 **Variable**

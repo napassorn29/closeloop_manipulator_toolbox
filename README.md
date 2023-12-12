@@ -78,6 +78,19 @@ define close-loop kinematic chain that using link object to generated property o
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)
   
   - tol: tolerance or error that the user can accept.
+  - 
+- #### *plot(q, mode) --> Plot bar linkage*:
+  Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
+  - q: The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angle.
+  - mode: Positive (Convex Solution), Negative (Concave Solution)
+    
+- #### *animationfk (frequency, mode) --> Animation of forward kinematic by bar linkage*:
+  Animation plot of forward kinematics, which is a continuous loop of all possible angles.
+  - frequency: Resolution of angles used in plotting.
+  - mode: Positive (Convex Solution), Negative (Concave Solution)
+
+- #### *animationik(dt, tol, kp, start, goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
+
   
   
 ## **Use Case**

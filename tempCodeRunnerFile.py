@@ -1,2 +1,5 @@
-
-# Robot.animationik(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97]
+traj_q = Robot.P_control_ik5(0.01,0.005,5,np.array([[4.714],[0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.001)
+# # print("q1:",q1)
+# # print("q2:",q2)
+# # print("q_all:",q_all)
+# print("traj_q:",traj_q)

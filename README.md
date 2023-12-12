@@ -62,18 +62,15 @@ define close-loop kinematic chain that using link object to generated property o
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
   
 - #### *ik(T_desired, outputJoint, mode, tol, method) --> The angle of the input joint*:
-  
-  Return The angle of the input joint when determining the desired output joint position in the radian unit.
-  
-  T_desired: Position of desired output joint
-  
-  method: numerical, geometrical
-  
-  mode: In numerical method can choose positive, negative,
-        In geometrical method can choose positive (++), negative (--), (+-), (-+) 
+  - Return The angle of the input joint when determining the desired output joint position in the radian unit.
+  - T_desired: Position of desired output joint
+  - method: numerical, geometrical
+  - mode: In numerical method can choose positive, negative,
+          In geometrical method can choose positive (++), negative (--), (+-), (-+)
+    
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)
   
-  tol: tolerance or error that the user can accept.
+  - tol: tolerance or error that the user can accept.
   
   
 ## **Use Case**

@@ -65,7 +65,7 @@ define close-loop kinematic chain that using link object to generated property o
   Return The angle of the input joint when determining the desired output joint position in the radian unit.
   - T_desired: Position of desired output joint
   - method: numerical, geometrical
-  - mode: In numerical method can choose positive, negative,
+  - mode: In numerical method can choose positive, negative
           In geometrical method can choose positive (++), negative (--), (+-), (-+)
     
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)

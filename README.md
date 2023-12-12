@@ -58,7 +58,8 @@ define close-loop kinematic chain that using link object to generated property o
     - q: The angle of the input joint that user wants to rotate.
     - outputJoint: Name of joint that user wants to know the position.
     - mode: Positive (Convex Solution), Negative (Concave Solution)
-      ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a984276a-fa37-43e7-b6f3-30dbc726ed75)
+
+  ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a984276a-fa37-43e7-b6f3-30dbc726ed75)
 
   
 - #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:

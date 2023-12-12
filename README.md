@@ -62,7 +62,7 @@ define close-loop kinematic chain that using link object to generated property o
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
   
 - #### *ik(T_desired, outputJoint, mode, tol, method) --> The angle of the input joint*:
-  - Return The angle of the input joint when determining the desired output joint position in the radian unit.
+  Return The angle of the input joint when determining the desired output joint position in the radian unit.
   - T_desired: Position of desired output joint
   - method: numerical, geometrical
   - mode: In numerical method can choose positive, negative,

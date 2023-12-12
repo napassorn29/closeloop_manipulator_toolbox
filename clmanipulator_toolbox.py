@@ -325,7 +325,7 @@ class closedLoopMani():
 
         return (q_min,q_max)
     
-    def boundary5(self, res = 0.01):
+        def boundary5(self, res = 0.01):
         if self.l1+self.l2 < self.l3+self.l4+self.l5:
             q1_min = 0
             q1_max = 2 * np.pi
@@ -372,33 +372,7 @@ class closedLoopMani():
         plt.grid(False)
         plt.show()
     
-    def minmax4(self, mode:str):
-        posFilter = np.array([[0],[0],[0],[1]])
-        bound = self.boundary4()
-        q_value = np.linspace(bound[0],bound[1],100)
-        minx,maxx,miny,maxy = 0,0,0,0
-        joint = []
-        for q in range(len(q_value)):
-            for Link in self.links:
-                for Joint in Link.jointName:
-                    q_find = [q_value[q]]
-                    output = self.fk(q_find,Joint,mode)
-                    D = output.A @ posFilter
-                    if D[0][0] < minx:
-                        minx = D[0][0]
-                    elif D[0][0] > maxx:
-                        maxx = D[0][0]
-                    if D[1][0] < miny:
-                        miny = D[1][0]
-                    elif D[1][0] > maxy:
-                        maxy = D[1][0]
-                    else:
-                        continue
-                # joint = joint.append(Joint)
-        minmax = [minx,maxx,miny,maxy]
-        return minmax
-    
-    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'positive', tol = 0.01, method = 'numerical'):
+    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'positive', tol = 0.01, method = 'geometrical'):
         if self.nlinks == 4:
             if method == 'numerical':
                 return self.__ik4_num(T_desired, outputJoint, tol)
@@ -434,11 +408,10 @@ class closedLoopMani():
         for init_guess in initial_guess:
             result = minimize(_objective,init_guess, bounds=[(q_min, q_max) for _ in initial_guess])
         
-        print('Debug:',_objective(result.x))
         if tol >= _objective(result.x) :
             return result.x[0]
         else :
-            raise ValueError(f'T_desired is out of workspace')
+            raise ValueError(f'T_desired is out of workspace. Error reported: {_objective(result.x)}')
 
     def __ik4_geo(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
         if outputJoint == self.j1 or outputJoint == self.j2:
@@ -462,24 +435,23 @@ class closedLoopMani():
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
-        Cspace_reshaped, q1_space, q2_space = self.boundary5()
+        C_space, q1_space, q2_space = self.boundary5()
         error = []
 
-        for i in range (len(q1_space)):
-            q = [q1_space[i], q2_space[i]]
-            T_actual = self.fk(q, outputJoint, mode = 'positive')
-            error.append(np.linalg.norm(T_actual.A[0:2,3] - T_desired))
-
+        for q1, q2 in zip(q1_space,q2_space):
+            T_actual = self.fk([q1, q2], outputJoint, mode).A @ np.array([[0],[0],[0],[1]])
+            error.append(np.linalg.norm(np.array([[T_actual[0][0]],[T_actual[1][0]]]) - T_desired))
+            
         if tol >= min(error):
             min_error_index = error.index(min(error))
             result = [q1_space[min_error_index], q2_space[min_error_index]]
             return result
         else:
-            raise ValueError(f'T_desired is out of workspace')
+            raise ValueError(f'T_desired is out of workspace. Error reported: {min(error)}')
         
     def __ik5_geo(self, T_desired, outputJoint, mode = '++', tol = 0.01):
         if outputJoint != self.j5:
-            raise ValueError(f'Geometric method for solving inverse kinematics of 5 bars closed-loop manipulator only capable of solving for end-effector position.')
+            raise ValueError(f'Geometric method for solving inverse kinematics of 5 bars closed-loop manipulator only capable for solving the end-effector position.')
 
         if mode == '++':
             mode1 = 'positive'
@@ -500,7 +472,7 @@ class closedLoopMani():
         return [q1, q2]
 
     def __ik2link(self, origin: np.ndarray, endEffector: np.ndarray , l1: (int, float), l2: (int, float),mode: str = 'up'):
-        if np.linalg.norm(endEffector - origin) > (l1 + l2):
+        if np.linalg.norm(endEffector - origin) > (l1 + l2) or np.linalg.norm(endEffector - origin) < (l1 - l2):
             raise ValueError(f'T_desired is out of workspace')
         
         c2 = (- l1**2 - l2**2 + np.linalg.norm(endEffector - origin)**2)/(2*l1*l2)
@@ -516,6 +488,32 @@ class closedLoopMani():
         q2 = np.arctan2(s2,c2)
 
         return (q1, q2)
+    
+    def minmax4(self, mode:str):
+        posFilter = np.array([[0],[0],[0],[1]])
+        bound = self.boundary4()
+        q_value = np.linspace(bound[0],bound[1],100)
+        minx,maxx,miny,maxy = 0,0,0,0
+        joint = []
+        for q in range(len(q_value)):
+            for Link in self.links:
+                for Joint in Link.jointName:
+                    q_find = [q_value[q]]
+                    output = self.fk(q_find,Joint,mode)
+                    D = output.A @ posFilter
+                    if D[0][0] < minx:
+                        minx = D[0][0]
+                    elif D[0][0] > maxx:
+                        maxx = D[0][0]
+                    if D[1][0] < miny:
+                        miny = D[1][0]
+                    elif D[1][0] > maxy:
+                        maxy = D[1][0]
+                    else:
+                        continue
+                # joint = joint.append(Joint)
+        minmax = [minx,maxx,miny,maxy]
+        return minmax
          
     def __plotLink(self,jointCoordinates:list):
         x_coords = []

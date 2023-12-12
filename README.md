@@ -93,9 +93,20 @@ L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
 Robot = closedLoopMani([L1,L2,L4,L5])
 ```
 
-#### forward kinematic of Robot
+#### Forward kinematic of Robot
 ```python
 q = [2.1267784793154387]
 mode = "positive"
 output = Robot.fk(q,'d',mode)
+```
+
+#### Boundary of 4 Bar
+```python
+bound = Robot.boundary4()
+print(bound)
+```
+
+#### Inverse kinematic of Robot
+```python
+
 ```

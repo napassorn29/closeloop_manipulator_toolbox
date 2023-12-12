@@ -54,7 +54,7 @@ define close-loop kinematic chain that using link object to generated property o
 - #### *fk(q, outputjoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
 - #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:
-- #### *plot_boundary5(res) --> avaliable workspace in input domain*:
-  
+- #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
+  Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain
 ## **Use Case**
 

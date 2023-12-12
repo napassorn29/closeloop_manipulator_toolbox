@@ -30,6 +30,9 @@ from spatialmath import SE3
 ```
 ## **Function**
 ### **clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
+define link property such as joint name, joint position etc. to construct close-loop kinematic chain class
+
+
 **Variable**
 - Name: Name of link.
 - Type: Type of link (fixed, input, and intermediate).
@@ -37,12 +40,21 @@ from spatialmath import SE3
 - Joint_pos: Position of each joint compared with the first joint in the link.
 
 **Method**
+- #### *is_connectable(other_link) --> bool*:
+  Checking connection between self and other link class by using joint name
+- #### *connect(other_link)* --> connected_name, connected_position, connect_dist_from_ref :
+  Return connection property between self and other link
 
 ### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
+define close-loop kinematic chain that using link object to generated property of close-loop kinematic chain (4-bar linkage, 5-bar linkage).
 **Variable**
 - Links: Link in robot that is defined above.
 
 **Method**
-
+- #### *fk(q, outputjoint, mode) --> Homogeneous matrix of outputjoint*:
+  Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
+- #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:
+- #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
+  Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain
 ## **Use Case**
 

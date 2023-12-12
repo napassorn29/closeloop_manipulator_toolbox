@@ -53,8 +53,13 @@ define close-loop kinematic chain that using link object to generated property o
 - Links: Link in robot that is defined above.
 
 **Method**
-- #### *fk(q, outputjoint, mode) --> Homogeneous matrix of outputjoint*:
+- #### *fk(q, outputJoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
+    - q: The angle of the input joint that user wants to rotate.
+    - outputJoint: Name of joint that user wants to know the position.
+    - mode: Positive (Convex Solution), Negative (Concave Solution)
+      ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a984276a-fa37-43e7-b6f3-30dbc726ed75)
+
   
 - #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:
   

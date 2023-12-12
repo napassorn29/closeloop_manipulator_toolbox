@@ -82,3 +82,20 @@ define close-loop kinematic chain that using link object to generated property o
   
 ## **Use Case**
 
+###  **4 Bar**
+#### Set closed loop manipulator 
+```python
+L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
+L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
+L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
+L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
+
+Robot = closedLoopMani([L1,L2,L4,L5])
+```
+
+#### forward kinematic of Robot
+```python
+q = [2.1267784793154387]
+mode = "positive"
+output = Robot.fk(q,'d',mode)
+```

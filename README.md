@@ -37,8 +37,8 @@ from spatialmath import SE3
 - Joint_pos: Position of each joint compared with the first joint in the link.
 
 **Method**
-- *is_connectable(other_link) --> bool* : Checking connection between self and other link class by using joint name
-- *connect(other_link)* --> connected_name, connected_position, connect_dist_from_ref : Return connection property between self and other link
+- #*is_connectable(other_link) --> bool* : Checking connection between self and other link class by using joint name
+- #*connect(other_link)* --> connected_name, connected_position, connect_dist_from_ref : Return connection property between self and other link
 
 ### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
 **Variable**

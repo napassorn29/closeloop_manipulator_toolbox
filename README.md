@@ -47,14 +47,24 @@ define link property such as joint name, joint position etc. to construct close-
 
 ### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
 define close-loop kinematic chain that using link object to generated property of close-loop kinematic chain (4-bar linkage, 5-bar linkage).
+
+
 **Variable**
 - Links: Link in robot that is defined above.
 
 **Method**
 - #### *fk(q, outputjoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
+  
 - #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:
+  
 - #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
-  Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain
+  Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
+  
+- #### *ik(T_desired, outputJoint, mode, tol, method) --> The angle of the input joint*:
+  Return The angle of the input joint when determining the desired output joint position in the radian unit.
+  T_desired: Position of desired output joint
+  mode: positive
+  
 ## **Use Case**
 

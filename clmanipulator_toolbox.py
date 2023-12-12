@@ -325,7 +325,7 @@ class closedLoopMani():
 
         return (q_min,q_max)
     
-        def boundary5(self, res = 0.01):
+    def boundary5(self, res = 0.01):
         if self.l1+self.l2 < self.l3+self.l4+self.l5:
             q1_min = 0
             q1_max = 2 * np.pi
@@ -601,15 +601,15 @@ class closedLoopMani():
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
-    def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+    def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
         if self.nlinks == 4:
             return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
         if self.nlinks == 5:
-            return self.__animationik5(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
+            return self.__animationik5(q_init,taskspace_goal,joint_output, mode, tol_ik, res)
     
-    def P_control_ik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+    def P_control_ik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
-        q = q_init
+        q = self.ik(init,joint_output, mode, tol_ik, method = 'geometrical' )
         q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
         error = q - q_goal
         while abs(error) > tol:
@@ -623,24 +623,23 @@ class closedLoopMani():
         traj_q = np.array(traj_q)
         return traj_q
     
-    def __animationik4(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+    def __animationik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
         minmax = self.minmax4(mode)
-        bound = self.boundary4()
-        path = self.P_control_ik4(dt,tol,kp,q_init,taskspace_goal,joint_output,mode,tol_ik)
+        path = self.P_control_ik4(dt,tol,kp,init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
         
-        ax.set_xlim(minmax[0]-1,minmax[1]+1)  # set x-axis limits 
-        ax.set_ylim(minmax[2]-1,minmax[3]+1)  # set y-axis limits 
+        ax.set_xlim(minmax[0]-2,minmax[1]+2)  # set x-axis limits 
+        ax.set_ylim(minmax[2]-2,minmax[3]+2)  # set y-axis limits 
 
         def update(frame):
             ax.clear()  # Clear the previous frame
             plt.grid(True)
             plt.axis('equal')
-            ax.set_xlim(minmax[0]-1,minmax[1]+1)  # Reset x-axis limits in 
-            ax.set_ylim(minmax[2]-1,minmax[3]+1)  # Reset y-axis limits in
+            ax.set_xlim(minmax[0]-2,minmax[1]+2)  # Reset x-axis limits in 
+            ax.set_ylim(minmax[2]-2,minmax[3]+2)  # Reset y-axis limits in
             q = [path[frame][0]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
@@ -657,41 +656,49 @@ class closedLoopMani():
         frames = len(path)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
-    
-    def P_control_ik5(self, dt: float, tol: float, kp: float, start: list, goal: list, joint_output: str, mode: str, tol_ik: float):
-        traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * 100)
-        q1 = []
-        q2 = []
-        for q_num in range(len(traj_q)):
-            q1.append([traj_q[q_num][0]])
-            q2.append([traj_q[q_num][1]])
-            
+        
+    def path_ik5(self, start: list, goal: list, joint_output: str, mode: str, tol_ik: float, res:float = 0.01):
+        traj_q = self.plan_path(start, goal, joint_output, mode, res * 100)
         q1_values = [point[0] for point in traj_q]
         q2_values = [point[1] for point in traj_q]
-        q1 = np.array(q1)
-        q2 = np.array(q2)
-        q_all = np.array(traj_q)
-        return q1, q2, q_all, traj_q,q1_values,q2_values
+        
+        posFilter = np.array([[0],[0],[0],[1]])     
+        minx,maxx,miny,maxy = 0,0,0,0
+        joint = []
+        for order in range(len(traj_q)):
+            for Link in self.links:
+                for Joint in Link.jointName:
+                    q_find = traj_q[order]
+                    output = self.fk(q_find,Joint,mode="positive")
+                    D = output.A @ posFilter
+                    if D[0][0] < minx:
+                        minx = D[0][0]
+                    elif D[0][0] > maxx:
+                        maxx = D[0][0]
+                    if D[1][0] < miny:
+                        miny = D[1][0]
+                    elif D[1][0] > maxy:
+                        maxy = D[1][0]
+                    else:
+                        continue
+        minmax = [minx,maxx,miny,maxy]
+        return traj_q,q1_values,q2_values,minmax
     
-    def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
+    def __animationik5(self,start:list,goal:list,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
-        q1, q2, q_all, traj_q,q1_values,q2_values = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
-        frames = len(q1)
-        posFilter = np.array([[0], [0], [0], [1]])
-        # ax.set_xlim(-20,80)
-        # ax.set_ylim(-20,80)
-        ax.set_xlim(-10,10)
-        ax.set_ylim(-10,10)
+        traj_q,q1_values,q2_values,minmax = self.path_ik5(start,goal,joint_output, mode, tol_ik)
+        frames = len(q1_values)
+        posFilter = np.array([[0], [0], [0], [1]]) 
+        ax.set_xlim(minmax[0]-2, minmax[1]+2) 
+        ax.set_ylim(minmax[2]-2, minmax[3]+2) 
         def update(frame):
             ax.clear()  # Clear the previous frame
             plt.grid(True)
             plt.axis('equal')
-            # ax.set_xlim(-20,80)
-            # ax.set_ylim(-20,80)
-            ax.set_xlim(-10,10)
-            ax.set_ylim(-10,10)
+            ax.set_xlim(minmax[0]-2, minmax[1]+2) 
+            ax.set_ylim(minmax[2]-2, minmax[3]+2) 
             q1 = q1_values[frame]
             q2 = q2_values[frame]
             q_all = [traj_q[frame][0]]
@@ -708,7 +715,7 @@ class closedLoopMani():
                 animation.event_source.stop()  # Stop the animation
 
         # Create the animation
-        frames = len(q1)
+        frames = len(q1_values)
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
@@ -731,17 +738,20 @@ class closedLoopMani():
         multiplier = 100
         possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
         for neighbor in possible_neighbors:
-            neighbor0 = neighbor[0]
-            neighbor1 = neighbor[1]
-            if 0 > neighbor0:
-                neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
-            if neighbor0 > np.pi*2*multiplier :
-                neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
-            if  0 > neighbor1:
-                neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
-            if neighbor1 > np.pi*2*multiplier:
-                neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
-            neighbors.append((neighbor0,neighbor1))
+            if 0 <= neighbor[0] < np.pi*2*multiplier and 0 <= neighbor[1] < np.pi*2*multiplier:
+                neighbors.append(neighbor)
+            else:
+                neighbor0 = neighbor[0]
+                neighbor1 = neighbor[1]
+                if 0 > neighbor0:
+                    neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
+                elif neighbor0 > np.pi*2*multiplier :
+                    neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
+                elif  0 > neighbor1:
+                    neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
+                elif neighbor1 > np.pi*2*multiplier:
+                    neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
+                neighbors.append((neighbor0,neighbor1))
         return neighbors
     
     def a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):
@@ -769,6 +779,7 @@ class closedLoopMani():
                     path_list = path[::-1]
                     result_list = [[x / 100 for x in inner_list] for inner_list in path_list]
                 return result_list
+                # return current_node
 
             closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set
 
@@ -777,6 +788,8 @@ class closedLoopMani():
                     continue
                 cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
                 cost = current_node[2] + cost_next
+                # cost = current_node[2] + self.cost_intersection5(*current_node[0], *neighbor)
+                # print("current_node : ",current_node[0])
                 heuristic_fn = self.grid_heuristic(neighbor, goal)
                 new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic_fn)
 
@@ -786,13 +799,6 @@ class closedLoopMani():
                     open_set = [(c, n) if n[0] != tuple(neighbor) else (cost + heuristic_fn, new_node) for c, n in open_set]
 
         return None
-
-    def is_ik_possible(self, node, outputJoint, mode, tolerance):
-        try:
-            self.ik(node, outputJoint, mode, tolerance, method = 'geometrical')
-            return True
-        except ValueError:
-            return False
         
     def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
         Cspace_reshaped, q1_space, q2_space = self.boundary5()
@@ -810,6 +816,7 @@ class closedLoopMani():
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
 
         return path_indices
+
 
     
 

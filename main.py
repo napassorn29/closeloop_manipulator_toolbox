@@ -42,92 +42,31 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 
 # q = [np.pi/2+np.pi/6,np.pi/2-np.pi/6]
 # mode = "positive"
-output = Robot.fk([np.pi/2,np.pi/3],'d','positive')
-print(output)
-
-plt.figure(figsize=(6, 6))
-# # plt.grid(True)
-
-# bound = Robot.boundary4()
-# print(bound)
-
-Robot.plot([np.pi/2,np.pi/3],"positive")
-
-# minmax4 = Robot.minmax4("positive")
-# print("minmax",minmax4)
-
-# Robot.animationfk(100, "positive")
-# # plt.show()
-
-# Robot.animationik(0.01,0.005,1,[0],np.array([[5.1],[3.0]]),'d','positive',1)
-# plt.show()
-
-# output_fk = Robot.fk(q,'d',"positive")
-
-# pid = Robot.P_control_ik4(0.01,0.005,5,[np.pi/2],np.array([[-0.08333] ,[2.548]]),'d','positive',0.5)
-# print(pid)
-
-
-
-# # print(output_fk)
-# T_desired = [5.1,3.0]
-# q_sol = Robot.ik(T_desired,'d','positive',0.1)
-# print("q_sol = ",q_sol)
-
-# q = [np.pi/2-np.pi/4,np.pi/2+np.pi/4]
-# q = [0.47118596694901044, -0.0006370324612307346]
-# mode = "positive"
-# output = Robot.fk(q,'d','positive')
+# output = Robot.fk([np.pi/2,np.pi/3],'d','positive')
 # print(output)
 
-# q = P_conntrol_ik4(0.01,0.005,5,[0],[5.1,3.0],'d','positive',0.01)
-# print(q)
-# T_desired = np.array([[48.69],[11.7]])
-# # T_desired = [12.0,4.0]
-# q_sol = Robot.ik(T_desired,'d',mode='++',method = 'geometrical')
-# print("q_sol = ", q_sol)
+plt.figure(figsize=(6, 6))
 
-# output = Robot.fk(q_sol,'d')
-# Cspace_reshaped, q1_space, q2_space = Robot.boundary5()
-# print(q1_space)
+# print(output_fk)
+T_desired = np.array([[2.832],[6.825]])
+# T_desired = np.array([[32.97],[38.69]])
+q_sol = Robot.ik(T_desired,'d','positive',0.1)
+print("q_sol = ",q_sol)
 
-# cost = Robot.cost_intersection5(np.pi/2, np.pi*2)
-# print('cost = ', cost)  
+Robot.plot(q_sol,"positive")
 
-# nei = Robot.grid_neighbors([np.pi*2*100,np.pi*2*100], 1)
-# print(nei)
+nei = Robot.grid_neighbors([0,0], 1)
+print(nei)
 
-# a_star = Robot.plan_path(np.array([[4.714],[0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01)
-# # print("q1:",q1), "d", '++',1)
-# # print("a_star = ", a_star[0][0])
-# # print("a_star = ", len(a_star))
-# print("a_star = ", a_star)
-
-q1, q2, q_all, traj_q,q1_values,q2_values = Robot.P_control_ik5(0.01,0.005,5,np.array([[4.714],[0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01)
+traj_q,q1_values,q2_values,minmax = Robot.path_ik5(np.array([[4.714],[-0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01,0.01)
+# traj_q,q1_values,q2_values,minmax = Robot.path_ik5(np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01,0.01)
 # print("q1:",q1)
 # print("q2:",q2)
-# print("q_all:",q_all)
+print("q_all:",minmax)
 print("traj_q:",traj_q)
 
-# Robot.animationik(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01)
-# Robot.animationik(0.01,0.005,5,np.array([[4.714],[0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01)
-# # # print("q1:",q1)
-# # # print("q2:",q2)
-# plt.show()
-Robot.animationik(0.01,0.005,5,np.array([[4.714],[0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01)
+# Robot.animationik(0.01,0.005,5,np.array([[48.69],[11.7]]),np.array([[32.97],[38.69]]),'d','++',0.01,0.01)
+Robot.animationik(0.01,0.005,5,np.array([[4.714],[-0.5257]]),np.array([[2.832],[6.825]]),'d','++',0.01,0.01)
 # print("q1:",q1)
 # print("q2:",q2)
 plt.show()
-
-# a_star = Robot.a_star([48.69,11.7], [32.97,38.69], "d", "positive")
-# print("a_star = ", a_star) 
-
-
-
-
-# Robot.plot(q_sol,"positive")
-# Robot.animationik(0.01,0.005,5,[0,0],[32.97,38.69],'d','positive',0.1)
-# plt.show()
-
-
-# path planning 

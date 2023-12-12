@@ -37,14 +37,14 @@ from spatialmath import SE3
 - Joint_pos: Position of each joint compared with the first joint in the link.
 
 **Method**
-1: is_connectable()
+- is_connectable(other_link) --> bool
+  checking connection between own link class and orther link class by using joint name 
 
 ### **clmanipulator_toolbox.closedLoopMani(Object, Links: link)**
 **Variable**
 - Links: Link in robot that is defined above.
 
 **Method**
-555
 
 ## **Use Case**
 

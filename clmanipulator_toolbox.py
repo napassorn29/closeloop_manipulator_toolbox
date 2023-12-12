@@ -694,8 +694,6 @@ class closedLoopMani():
             # ax.set_ylim(-20,80)
             ax.set_xlim(-10,10)
             ax.set_ylim(-10,10)
-            # q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
-            # q2 = [pathq2[frame][0]]
             q1 = q1_values[frame]
             q2 = q2_values[frame]
             q_all = [traj_q[frame][0]]
@@ -710,7 +708,6 @@ class closedLoopMani():
                 
             if frame == len(traj_q) - 1:
                 animation.event_source.stop()  # Stop the animation
-            # return robot_plot,
 
         # Create the animation
         frames = len(q1)
@@ -734,32 +731,17 @@ class closedLoopMani():
         neighbors = []
         x, y = node
         multiplier = 100
-        # possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
         possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
         for neighbor in possible_neighbors:
-            # if 0 <= neighbor[0] < np.pi*2*multiplier and 0 <= neighbor[1] < np.pi*2*multiplier:
-            #     neighbors.append(neighbor)
-
-            # if 0 <= neighbor[0] <= np.pi*2*multiplier and 0 <= neighbor[1] <= np.pi*2*multiplier:
-            #     neighbors.append(neighbor)
-
             neighbor0 = neighbor[0]
             neighbor1 = neighbor[1]
-            # if 0 <= neighbor0 <= np.pi*2*multiplier and 0 <= neighbor1 <= np.pi*2*multiplier:
-            #     continue
-                # neighbor[0] = neighbor[0]
-                # neighbor[1] = neighbor[1]
             if 0 > neighbor0:
                 neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
-                # neighbor[1] = neighbor[1]
             if neighbor0 > np.pi*2*multiplier :
                 neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
-                # neighbor[1] = neighbor[1]
             if  0 > neighbor1:
-                # neighbor[0] = neighbor[0]
                 neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
             if neighbor1 > np.pi*2*multiplier:
-                # neighbor[0] = neighbor[0]
                 neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
             neighbors.append((neighbor0,neighbor1))
         return neighbors
@@ -789,7 +771,6 @@ class closedLoopMani():
                     path_list = path[::-1]
                     result_list = [[x / 100 for x in inner_list] for inner_list in path_list]
                 return result_list
-                # return current_node
 
             closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set
 
@@ -798,8 +779,6 @@ class closedLoopMani():
                     continue
                 cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
                 cost = current_node[2] + cost_next
-                # cost = current_node[2] + self.cost_intersection5(*current_node[0], *neighbor)
-                # print("current_node : ",current_node[0])
                 heuristic_fn = self.grid_heuristic(neighbor, goal)
                 new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic_fn)
 
@@ -831,175 +810,9 @@ class closedLoopMani():
         goal = [round(q1_space[goal_index[0]],num_round)*multiplier, round(q2_space[goal_index[1]],num_round)*multiplier]
         
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
-        
-        # path_indices = self.a_star(start_index, goal_index, outputJoint, mode)
+
         return path_indices
-        # if path_indices:
-        #     path = [(q1_space[index[0]], q2_space[index[1]]) for index in path_indices]
-        #     return path
-        # else:
-        #     return None
+
     
-    
-    
-    
-    # def P_control_ik5(self, dt: float, tol: float, kp: float, start: list, goal: list, joint_output: str, mode: str, tol_ik: float):
-    #     count_after_decimal = str(tol_ik)[::-1].find('.')
-    #     # multiplier = 10**(count_after_decimal)
-    #     multiplier = 100
-    #     traj_q = self.plan_path(start, goal, joint_output, mode, tol_ik * multiplier)
-    #     q1 = []
-    #     q2 = []
-    #     for q_num in range(len(traj_q)):
-    #         q1.append([traj_q[q_num][0]])
-    #         q2.append([traj_q[q_num][1]])
-            
-    #     q1_values = [point[0] for point in traj_q]
-    #     q2_values = [point[1] for point in traj_q]
-    #     q1 = np.array(q1)
-    #     q2 = np.array(q2)
-    #     q_all = np.array(traj_q)
-    #     return q1, q2, q_all, traj_q,q1_values,q2_values
-
-    # def __animationik5(self,dt:float, tol:float, kp:float, start:list,goal:list,joint_output:str, mode:str, tol_ik:float):
-    #     fig, ax = plt.subplots()
-    #     plt.grid(True)
-    #     plt.axis('equal')
-    #     q1, q2, q_all, traj_q,q1_values,q2_values = self.P_control_ik5(dt, tol, kp, start,goal,joint_output, mode, tol_ik)
-    #     frames = len(q1)
-    #     posFilter = np.array([[0], [0], [0], [1]])
-    #     ax.set_xlim(-10,10)
-    #     ax.set_ylim(-10,10)
-    #     def update(frame):
-    #         ax.clear()  # Clear the previous frame
-    #         plt.grid(True)
-    #         plt.axis('equal')
-    #         ax.set_xlim(-10,10)
-    #         ax.set_ylim(-10,10)
-    #         # q1 = [pathq1[frame][0]]  # Change the joint angles in each frame
-    #         # q2 = [pathq2[frame][0]]
-    #         q1 = q1_values[frame]
-    #         q2 = q2_values[frame]
-    #         q_all = [traj_q[frame][0]]
-    #         for Link in self.links:
-    #             jointCoor = []
-    #             for Joint in Link.jointName:
-    #                 output = self.fk([q1,q2], Joint, mode = "positive")
-    #                 D = output.A @ posFilter
-    #                 E = np.array([[D[0][0]], [D[1][0]]])
-    #                 jointCoor.append(E)
-    #             self.__plotLink(jointCoor)
-                
-    #         if frame == len(q1_values) - 1:
-    #             animation.event_source.stop()  # Stop the animation
-    #         # return robot_plot,
-
-    #     # Create the animation
-    #     frames = len(q1)
-    #     animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
-    #     plt.show()
-        
-    # def cost_intersection5(self, q1:float, q2:float):
-    #     R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1)],[self.j1_pos[1][0] + self.l2*np.sin(q1)]])
-    #     R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2)],[self.j2_pos[1][0] + self.l3*np.sin(q2)]])
-    #     if self.is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
-    #         cost = 1
-    #     else: # Not Intersected
-    #         cost = 1000000 
-            
-    #     return cost
-    
-    # def grid_heuristic(self, start:list, goal:list):
-    #     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
-    
-    # def grid_neighbors(self, node:list, res:float):
-    #     neighbors = []
-    #     x, y = node
-    #     count_after_decimal = str(res)[::-1].find('.')
-    #     # multiplier = 1.0/res
-    #     # multiplier = 10**(count_after_decimal)
-    #     multiplier = 100
-    #     # possible_neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)]
-    #     possible_neighbors = [(x + res, y), (x - res, y), (x, y + res), (x, y - res), (x + res, y + res), (x - res, y - res), (x + res, y - res), (x - res, y + res)]
-    #     for neighbor in possible_neighbors:
-    #         if 0 <= neighbor[0] < np.pi*2*multiplier and 0 <= neighbor[1] < np.pi*2*multiplier:
-    #             neighbors.append(neighbor)
-    #     #     neighbor0 = neighbor[0]
-    #     #     neighbor1 = neighbor[1]
-    #     #     if 0 > neighbor0:
-    #     #         neighbor0 = neighbor0 + (np.pi * 2 * multiplier)
-    #     #     if neighbor0 > np.pi*2*multiplier :
-    #     #         neighbor0 = neighbor0 - (np.pi * 2 * multiplier)
-    #     #     if  0 > neighbor1:
-    #     #         neighbor1 = neighbor1 + (np.pi * 2 * multiplier)
-    #     #     if neighbor1 > np.pi*2*multiplier:
-    #     #         neighbor1 = neighbor1 - (np.pi * 2 * multiplier)
-    #     #     neighbors.append((neighbor0,neighbor1))
-    #     # return neighbors
-    
-    # def a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):
-    #     def make_node(state, parent=None, cost=0, heuristic=0):
-    #         return (tuple(state), parent, cost, heuristic)
-
-    #     open_set = []
-    #     closed_set = set()
-
-    #     heuristic_fn = self.grid_heuristic(start, goal)
-    #     start_node = make_node(start, cost=0, heuristic=heuristic_fn)
-
-    #     heapq.heappush(open_set, (0, start_node))
-    #     start = tuple(start)
-    #     goal = tuple(goal)
-    #     # count_after_decimal = str(res)[::-1].find('.')
-    #     # multiplier = 10**(count_after_decimal)
-    #     multiplier = 100
-    #     while open_set:
-    #         current_cost, current_node = heapq.heappop(open_set)
-
-    #         if current_node[0] == goal:
-    #             path = []
-    #             while current_node:
-    #                 path.append(list(current_node[0]))  # Convert back to list for the final path
-    #                 current_node = current_node[1]
-    #                 path_list = path[::-1]
-    #                 result_list = [[x / multiplier for x in inner_list] for inner_list in path_list]
-    #             return result_list
-    #             # return current_node
-
-    #         closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set
-
-    #         for neighbor in self.grid_neighbors(list(current_node[0]), res):  # Convert to list for the grid_neighbors call
-    #             if tuple(neighbor) in closed_set:
-    #                 continue
-    #             cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
-    #             cost = current_node[2] + cost_next
-    #             heuristic_fn = self.grid_heuristic(neighbor, goal)
-    #             new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic_fn)
-
-    #             if all(tuple(neighbor) != node[0] for _, node in open_set):
-    #                 heapq.heappush(open_set, (cost + heuristic_fn, new_node))
-    #             elif cost < next(cost for c, n in open_set if n[0] == tuple(neighbor)):
-    #                 open_set = [(c, n) if n[0] != tuple(neighbor) else (cost + heuristic_fn, new_node) for c, n in open_set]
-
-    #     return None
-        
-    # def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
-    #     Cspace_reshaped, q1_space, q2_space = self.boundary5(res)
-    #     q_start = np.array(self.ik(start, outputJoint, mode, 0.05, method = 'geometrical'))
-    #     q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05, method = 'geometrical'))
-        
-    #     start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
-    #     goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
-        
-    #     count_after_decimal = str(res)[::-1].find('.')
-    #     num_round = count_after_decimal
-    #     # multiplier = 10**(count_after_decimal)
-    #     multiplier = 100
-    #     start = [round(q1_space[start_index[0]],num_round)*multiplier, round(q2_space[start_index[1]],num_round)*multiplier]
-    #     goal = [round(q1_space[goal_index[0]],num_round)*multiplier, round(q2_space[goal_index[1]],num_round)*multiplier]
-        
-    #     path_indices = self.a_star(start, goal, outputJoint, mode,res)
-
-    #     return path_indices
 
         

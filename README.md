@@ -63,10 +63,11 @@ define close-loop kinematic chain that using link object to generated property o
 
   
 - #### *boundary4() --> list that contain minimum and maximum input value for 4-bar linkage*:
-  
+
 - #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
-  
+  - res: resolution of q of input joint.
+      
 - #### *ik(T_desired, outputJoint, mode, tol, method) --> The angle of the input joint*:
   Return The angle of the input joint when determining the desired output joint position in the radian unit.
   - T_desired: Position of desired output joint

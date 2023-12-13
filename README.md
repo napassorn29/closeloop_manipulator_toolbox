@@ -242,6 +242,7 @@ result: the white area in the figure represent avaliable configuration space and
 
 #### Animation inverse kinematics
 ```python
-
+Robot.animationik(0.01, 0.005, 5, np.array([[4.714],[-0.5257]]), np.array([[2.832],[6.825]]),'d','++', 0.01, 0.01)
+plt.show()
 ```
 result:

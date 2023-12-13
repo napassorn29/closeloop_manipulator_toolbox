@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from spatialmath import SE3
 import heapq
 import math
+from matplotlib.widgets import Slider, Button
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import minimize
 
-# define each link of the manipulator
 class link():
     def __init__(self, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray):
         # Name: Check if 'Name' is string
@@ -49,7 +49,7 @@ class link():
                 raise ValueError('Invalid joint position. Initial joint position must be (0, 0)')
         else:
             raise ValueError('Invalid joint position. Joint position must be numpy.ndarray.')
-
+    
     def is_connectable(self, other_link)->bool:
     # Check if 2 Links have the same joints
         connectability = False
@@ -115,7 +115,6 @@ class link():
 
         return rotation_matrix @ j_pos
 
-# define complete manipulator with closed-loop structure from links
 class closedLoopMani():
     def __init__(self, Links: link):
         self.nlinks = len(Links)
@@ -124,13 +123,10 @@ class closedLoopMani():
         for Link in Links:
             self.links_type.append(Link.type)
         
-        # check number of fixed link 
         if self.links_type.count('fixed') != 1:
             raise ValueError('Closed-loop manipulator require only 1 fixed link.')
         
-        # 4-bar linkage
         if self.nlinks == 4:
-            # check number of input link
             if self.links_type.count('input') != 1:
                 raise ValueError(f'4-Bar manipulator require 1 input link. Current number of input link: {self.links_type.count("input")}')
             
@@ -157,7 +153,6 @@ class closedLoopMani():
             self.l3 = self.intermediate_link_1.jointDist(self.j2,self.j4)
             self.l4 = self.intermediate_link_2.jointDist(self.j3,self.j4)
 
-        # 5-bar linkage
         elif self.nlinks == 5:
             if self.links_type.count('input') != 2:
                 raise ValueError(f'5-Bar manipulator require 2 input link. Current number of input link: {self.links_type.count("input")}')
@@ -195,24 +190,19 @@ class closedLoopMani():
                 Joints.append(joint)
         self.joints = list(set(Joints))
 
-    # forward kinematics of the manipulator
     def fk(self, q, outputJoint, mode = "positive"):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
-        # forward kinematics of 4-bar linkage
         if self.nlinks == 4:
             if len(q) != 1:
                 raise ValueError(f'4-Bar manipulator require 1 joint configuration.')
             return self.__fk4(q, outputJoint, mode)
-        
-        # forward kinematics of 5-bar linkage
         if self.nlinks == 5:
             if len(q) != 2:
                 raise ValueError(f'5-Bar manipulator require 2 joint configurations.')
             return self.__fk5(q, outputJoint, mode)
-    
-    # forward kinematics of 4-bar linkage
+            
     def __fk4(self, q, outputJoint, mode = "positive"):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
         R2 = np.array([[self.j2_pos[0][0]],[self.j2_pos[1][0]]])
@@ -229,7 +219,7 @@ class closedLoopMani():
             elif outputJoint in self.input_link.jointName         :  target_link = self.input_link         ; base_joint_pos = self.j1_pos; direction_joint_pos = j3_pos; original_orien = target_link.jointOrien(self.j1,self.j3); base_joint = self.j1
             elif outputJoint in self.intermediate_link_1.jointName:  target_link = self.intermediate_link_1; base_joint_pos = self.j2_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(self.j2,self.j4); base_joint = self.j2
             elif outputJoint in self.intermediate_link_2.jointName:  target_link = self.intermediate_link_2; base_joint_pos = j3_pos; direction_joint_pos = j4_pos; original_orien = target_link.jointOrien(self.j3,self.j4); base_joint = self.j3
-            else:                                               raise ValueError(f'Something went wrong.')
+            else:                                                    raise ValueError(f'Something went wrong.')
             
             orien = np.arctan2((direction_joint_pos[1][0] - base_joint_pos[1][0]),(direction_joint_pos[0][0] - base_joint_pos[0][0]))
             angle = orien - original_orien
@@ -237,7 +227,6 @@ class closedLoopMani():
 
             return self.__HMpose(base_joint_pos + rotated_relative_position,angle)
     
-    # forward kinematics of 5-bar linkage
     def __fk5(self, q, outputJoint, mode = "positive"):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
         R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q[1])],[self.j2_pos[1][0] + self.l3*np.sin(q[1])]])
@@ -264,7 +253,12 @@ class closedLoopMani():
             rotated_relative_position = target_link.rotateJoint(outputJoint,angle) - target_link.rotateJoint(base_joint,angle)
             return self.__HMpose(base_joint_pos + rotated_relative_position,angle)
 
-    # check if 2 links are connectable (have the same joint) 
+    def __is_fk5_available(self, q):
+        R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
+        R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q[1])],[self.j2_pos[1][0] + self.l3*np.sin(q[1])]])
+
+        return self.__is_circle_intersection(R1, R2, self.l4, self.l5)  
+
     def __circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int), mode: str):
         # Center of circle 1
         h1 = o1[0][0]
@@ -298,8 +292,7 @@ class closedLoopMani():
 
         return np.array([[x],[y]]) 
     
-    # check if 2 links are connectable (have the same joint)  
-    def is_circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int)):
+    def __is_circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int)):
         # Center of circle 1
         h1 = o1[0][0]
         k1 = o1[1][0]
@@ -326,7 +319,13 @@ class closedLoopMani():
         Rz = SE3.Rz(orien)
         return T * Rz
     
-    def boundary4(self):
+    def boundary(self, res = 0.01):
+        if self.nlinks == 4:
+            return self.__boundary4(self)
+        if self.nlinks == 5:
+            return self.__boundary5(self, res)
+
+    def __boundary4(self):
         if self.l1+self.l2 < self.l3+self.l4:
             q_min = 0
             q_max = 2 * np.pi
@@ -339,30 +338,14 @@ class closedLoopMani():
 
         return (q_min,q_max)
     
-    def boundary5(self, res = 0.01):
-        if self.l1+self.l2 < self.l3+self.l4+self.l5:
-            q1_min = 0
-            q1_max = 2 * np.pi
-        else:
-            q1_min = -np.arccos(((self.l1**2)+(self.l2**2)-((self.l3+self.l4+self.l5)**2))/(2*self.l1*self.l2))
-            q1_max = np.arccos(((self.l1**2)+(self.l2**2)-((self.l3+self.l4+self.l5)**2))/(2*self.l1*self.l2))
-
-        if self.l1+self.l3 < self.l2+self.l4+self.l5:
-            q2_min = 0
-            q2_max = 2 * np.pi
-        else:
-            q2_min = -np.arccos(((self.l1**2)+(self.l3**2)-((self.l2+self.l4+self.l5)**2))/(2*self.l1*self.l3))
-            q2_max = np.arccos(((self.l1**2)+(self.l3**2)-((self.l2+self.l4+self.l5)**2))/(2*self.l1*self.l3))
-        
+    def __boundary5(self, res = 0.01):
         Cspace = []
         q1_space = []
         q2_space = []
         for q2 in range (int(2*np.pi/res)):
             CspaceRow = []
             for q1 in range (int(2*np.pi/res)):
-                R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1*res)],[self.j1_pos[1][0] + self.l2*np.sin(q1*res)]])
-                R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2*res)],[self.j2_pos[1][0] + self.l3*np.sin(q2*res)]])
-                if self.is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
+                if self.__is_fk5_available([q1,q2]): # Intersected
                     CspaceRow.append(255)
                     q1_space.append(q1*res)
                     q2_space.append(q2*res)
@@ -377,7 +360,7 @@ class closedLoopMani():
         return Cspace_reshaped, q1_space, q2_space
     
     def plot_boundary5(self, res = 0.01):
-        Cspace_reshaped, q1_space, q2_space = self.boundary5(res)
+        Cspace_reshaped, q1_space, q2_space = self.__boundary5(res)
         plt.imshow(Cspace_reshaped, aspect='equal',origin='lower',extent=(0, int(2*np.pi/res)*res, 0, int(2*np.pi/res)*res))
         plt.xlabel('q1')
         plt.ylabel('q2')
@@ -386,7 +369,7 @@ class closedLoopMani():
         plt.grid(False)
         plt.show()
     
-    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'positive', tol = 0.01, method = 'geometrical'):
+    def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'up', tol = 0.01, method = 'geometrical'):
         if self.nlinks == 4:
             if method == 'numerical':
                 return self.__ik4_num(T_desired, outputJoint, mode, tol)
@@ -398,51 +381,69 @@ class closedLoopMani():
             if method == 'numerical':
                 return self.__ik5_num(T_desired, outputJoint, mode, tol)
             elif method == 'geometrical':
-                if mode == 'positive':
+                if mode == 'up':
                     mode = '++'
-                elif mode == 'negative':
+                elif mode == 'down':
                     mode = '--'
                 return self.__ik5_geo(T_desired, outputJoint, mode, tol)
             else: 
                 raise ValueError(f'Unavailable method.')
     
-    def __ik4_num(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
+    def __ik4_num(self, T_desired, outputJoint, mode = 'up', tol = 0.01):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
-        boundary = self.boundary4()
+        boundary = self.__boundary4()
 
-        def _objective(q):
-            T_actual = self.fk(q, outputJoint, mode).A @ np.array([[0],[0],[0],[1]])
-
+        def _objectivePositive(q):
+            T_actual = self.fk(q, outputJoint, "positive").A @ np.array([[0],[0],[0],[1]])
             return np.linalg.norm(np.array([[T_actual[0][0]],[T_actual[1][0]]]) - T_desired)
         
-        result = minimize(_objective,boundary[0], bounds = [boundary])
+        def _objectiveNegative(q):
+            T_actual = self.fk(q, outputJoint, "negative").A @ np.array([[0],[0],[0],[1]])
+            return np.linalg.norm(np.array([[T_actual[0][0]],[T_actual[1][0]]]) - T_desired)
         
-        if tol >= _objective(result.x) :
-            return result.x[0]
-        else :
-            raise ValueError(f'T_desired is out of workspace. Error reported: {_objective(result.x)}')
+        result_positive = minimize(_objectivePositive,boundary[0], bounds = [boundary])
+        result_negative = minimize(_objectiveNegative,boundary[0], bounds = [boundary])
 
-    def __ik4_geo(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
+        if (_objectivePositive(result_positive.x) <= _objectiveNegative(result_negative.x)):
+            if tol >= _objectivePositive(result_positive.x) :
+                return result_positive.x, "positive"
+            else :
+                raise ValueError(f'T_desired is out of workspace. Error reported: {_objectivePositive(result_positive.x)}')
+        else:
+            if tol >= _objectiveNegative(result_negative.x) :
+                return result_negative.x, "negative"
+            else :
+                raise ValueError(f'T_desired is out of workspace. Error reported: {_objectivePositive(result_negative.x)}')
+
+    def __ik4_geo(self, T_desired, outputJoint, mode = 'up', tol = 0.01):
         if outputJoint == self.j1 or outputJoint == self.j2:
             raise ValueError(f'Specified outputJoint are on fixed link.')
         elif outputJoint == self.j3:
             if np.linalg.norm(T_desired - self.j1_pos) > self.l2 - tol and np.linalg.norm(T_desired - self.j1_pos) < self.l2 + tol:
-                check = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l4, mode)
+                check, mode_flag = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l4, mode)
                 q1_neg, q1_pos = np.arccos((T_desired - self.j1_pos)[0][0],np.linalg.norm(T_desired - self.j1_pos))
-                if T_desired[1][0] > 0: return q1_pos
-                else: return q1_neg
+                if T_desired[1][0] > 0: return [q1_pos], mode_flag
+                else: return [q1_neg], mode_flag
             else:
                 raise ValueError(f'T_desired is out of workspace')
         elif outputJoint == self.j4:
             if np.linalg.norm(T_desired - self.j2_pos) >= self.l3 - tol and np.linalg.norm(T_desired - self.j2_pos) < self.l3 + tol:
-                q1, q3 = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode)
-                return q1
+                (q1, q3), dummy_mode_flag = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode)
+
+                pos_mode_check = self.__fk4([q1], outputJoint, mode = "positive").A @ np.array([[0],[0],[0],[1]])
+
+                if np.linalg.norm(np.array([[pos_mode_check[0][0]],[pos_mode_check[1][0]]]) - T_desired) < tol:
+                    mode_flag = "positive"
+                else:
+                    mode_flag = "negative"
+
+                return [q1], mode_flag
             else:
                 raise ValueError(f'T_desired is out of workspace')
     
-    def __ik5_num(self, T_desired, outputJoint, mode = 'positive', tol = 0.01):
+    def __ik5_num(self, T_desired, outputJoint, mode = 'up', tol = 0.01):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
@@ -452,75 +453,93 @@ class closedLoopMani():
             temp *= 10
             i += 1
         
-        C_space, q1_space, q2_space = self.boundary5(10**(-i))
-        error = []
+        C_space, q1_space, q2_space = self.__boundary5(10**(-i))
+        error_pos = []
+        error_neg = []
 
         for q1, q2 in zip(q1_space,q2_space):
-            T_actual = self.fk([q1, q2], outputJoint, mode).A @ np.array([[0],[0],[0],[1]])
-            error.append(np.linalg.norm(np.array([[T_actual[0][0]],[T_actual[1][0]]]) - T_desired))
+            T_actual_pos = self.fk([q1, q2], outputJoint, 'positive').A @ np.array([[0],[0],[0],[1]])
+            T_actual_neg = self.fk([q1, q2], outputJoint, 'negative').A @ np.array([[0],[0],[0],[1]])
+            error_pos.append(np.linalg.norm(np.array([[T_actual_pos[0][0]],[T_actual_pos[1][0]]]) - T_desired))
+            error_neg.append(np.linalg.norm(np.array([[T_actual_neg[0][0]],[T_actual_neg[1][0]]]) - T_desired))
             
-        if tol >= min(error):
-            min_error_index = error.index(min(error))
-            result = [q1_space[min_error_index], q2_space[min_error_index]]
-            return result
+        if min(error_pos) <= min(error_neg):
+            final_error = error_pos
+            mode_flag = "positive"
         else:
-            raise ValueError(f'T_desired is out of workspace. Error reported: {min(error)}')
+            final_error = error_neg
+            mode_flag = "negative"
+    
+        if tol >= min(final_error):
+                min_error_index = final_error.index(min(final_error))
+                return [q1_space[min_error_index], q2_space[min_error_index]], mode_flag
+        else:
+            raise ValueError(f'T_desired is out of workspace. Error reported: {min(final_error)}')
         
     def __ik5_geo(self, T_desired, outputJoint, mode = '++', tol = 0.01):
         if outputJoint != self.j5:
             raise ValueError(f'Geometric method for solving inverse kinematics of 5 bars closed-loop manipulator only capable for solving the end-effector position.')
 
-        if mode == '++':
-            mode1 = 'positive'
-            mode2 = 'negative'
-        elif mode == '+-':
-            mode1 = 'positive'
-            mode2 = 'positive'
-        elif mode == '-+':
-            mode1 = 'negative'
-            mode2 = 'negative'
-        elif mode == '--':
-            mode1 = 'negative'
-            mode2 = 'positive'
+        if   mode == '++': mode1 = 'up'  ; mode2 = 'down'
+        elif mode == '+-': mode1 = 'up'  ; mode2 = 'up'
+        elif mode == '-+': mode1 = 'down'; mode2 = 'down'
+        elif mode == '--': mode1 = 'down'; mode2 = 'up'
+        mode_flag = ""
 
-        q1, q3 = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode1)
-        q2, q4 = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l5, mode2)
+        (q1, q3), mode_flag1 = self.__ik2link(self.j1_pos, T_desired, self.l2, self.l4, mode1)
+        (q2, q4), mode_flag2 = self.__ik2link(self.j2_pos, T_desired, self.l3, self.l5, mode2)
 
-        return [q1, q2]
+        pos_mode_check = self.__fk5([q1, q2], outputJoint, mode = "positive").A @ np.array([[0],[0],[0],[1]])
+
+        if np.linalg.norm(np.array([[pos_mode_check[0][0]],[pos_mode_check[1][0]]]) - T_desired) < tol:
+            mode_flag = "positive"
+        else:
+            mode_flag = "negative"
+
+        return [q1, q2], mode_flag
 
     def __ik2link(self, origin: np.ndarray, endEffector: np.ndarray , l1: (int, float), l2: (int, float),mode: str = 'up'):
         if np.linalg.norm(endEffector - origin) > (l1 + l2) or np.linalg.norm(endEffector - origin) < (l1 - l2):
             raise ValueError(f'T_desired is out of workspace')
         
         c2 = (- l1**2 - l2**2 + np.linalg.norm(endEffector - origin)**2)/(2*l1*l2)
-        if mode == 'negative':
+        if mode == 'down':
             s2 = np.sqrt(1 - c2**2)
-        elif mode == 'positive':
+        elif mode == 'up':
             s2 = - np.sqrt(1 - c2**2)
         else:
-            raise ValueError(f'Mode must be only "positive" or "negative". Current mode: {mode}')
+            raise ValueError(f'Inverse kinematic mode must be only "up" or "down". Current mode: {mode}')
         cs1 = np.array([[l1 + l2*c2, l2*s2],[-l2*s2, l1 + l2*c2]])/((l1 + l2*c2)**2 + (l2*s2)**2) @ (endEffector - origin)
 
         q1 = np.arctan2(cs1[1][0],cs1[0][0])
         q2 = np.arctan2(s2,c2)
 
-        return (q1, q2)
+        if q2 > -q1 and q2 < np.pi - q1:
+            mode_flag = "positive"
+        else:
+            mode_flag = "negative"
+
+        return (q1, q2) , mode_flag
     
-    def minmax4(self, mode:str):
-        bound = self.boundary4()
-        q_value = np.linspace(bound[0],bound[1],100)
-        x = []; y = []
-        for q in q_value:
-            for Link in self.links:
-                for Joint in Link.jointName:
-                    output = self.fk([q],Joint,mode)
-                    D = output.A @ np.array([[0],[0],[0],[1]])
-                    x.append(D[0][0])
-                    y.append(D[1][0])
-        minmax = [min(x),max(x),min(y),max(y)]
-        return minmax
+    def __minmax4(self):
+        min_x = min(self.j1_pos[0][0] - self.l2, self.j2_pos[0][0] - self.l3)
+        max_x = max(self.j1_pos[0][0] + self.l2, self.j2_pos[0][0] + self.l3)
+
+        min_y = min(self.j1_pos[1][0] - self.l2, self.j2_pos[1][0] - self.l3)
+        max_y = max(self.j1_pos[1][0] + self.l2, self.j2_pos[1][0] + self.l3)
+
+        return [min_x,max_x,min_y,max_y]
+    
+    def __minmax5(self):
+        min_x = min(self.j1_pos[0][0] - self.l2 - self.l4, self.j2_pos[0][0] - self.l3 - self.l5)
+        max_x = max(self.j1_pos[0][0] + self.l2 + self.l4, self.j2_pos[0][0] + self.l3 + self.l5)
+
+        min_y = min(self.j1_pos[1][0] - self.l2 - self.l4, self.j2_pos[1][0] - self.l3 - self.l5) 
+        max_y = max(self.j1_pos[1][0] + self.l2 + self.l4, self.j2_pos[1][0] + self.l3 + self.l5)
          
-    def __plotLink(self,jointCoordinates:list):
+        return [min_x,max_x,min_y,max_y]
+    
+    def __plotLink(self,jointCoordinates:list, axes):
         x_coords = []
         y_coords = []
 
@@ -551,88 +570,163 @@ class closedLoopMani():
         y_sorted += (y_sorted[0],)
 
         # Plotting the non-intersecting polygon
-        plt.plot(x_sorted, y_sorted)
+        axes.plot(x_sorted, y_sorted)
         
     def plot(self,q:list,mode:str):
         plt.grid(True)
         plt.axis('equal')
-        posFilter = np.array([[0],[0],[0],[1]])
         for Link in self.links:
             jointCoor = []
             for Joint in Link.jointName:
-                output = self.fk(q,Joint,mode)
-                D = output.A @ posFilter
-                E = np.array([[D[0][0]],[D[1][0]]])
-                jointCoor.append(E)
+                temp = self.fk(q,Joint,mode).A @ np.array([[0],[0],[0],[1]])
+                jointCoor.append(np.array([[temp[0][0]],[temp[1][0]]]))
             self.__plotLink(jointCoor)
     
-    def animationfk(self, frequency:int, mode:str):
+    def teach(self, mode:str = "positive"):
         if self.nlinks == 4:
-            return self.__animationfk4(frequency, mode)
+            return self.__teach4(mode)
         if self.nlinks == 5:
-            return self.__animationfk4(frequency, mode)
+            return self.__teach5(mode)
     
-    def __animationfk4(self, frequency:int, mode:str):
+    def __teach4(self, mode:str = "positive"):
         fig, ax = plt.subplots()
-        plt.grid(True)
-        plt.axis('equal')
-        minmax = self.minmax4(mode)
-        bound = self.boundary4()
-        q_values = np.linspace(bound[1],bound[0], frequency)
-        posFilter = np.array([[0], [0], [0], [1]])
+        ax.grid(True)
+        ax.set_aspect('equal')
+        minmax = self.__minmax4()
+        bound = self.__boundary4()
         
-        plt.grid(True)
         ax.set_xlim(minmax[0]-1, minmax[1]+1)  # set x-axis limits 
         ax.set_ylim(minmax[2]-1, minmax[3]+1)  # set y-axis limits 
 
-        def update(frame):
+        for Link in self.links:
+            jointCoor = []
+            for Joint in Link.jointName:
+                temp = self.fk([bound[0]], Joint, mode).A @ np.array([[0], [0], [0], [1]])
+                jointCoor.append(np.array([[temp[0][0]], [temp[1][0]]]))
+            self.__plotLink(jointCoor,ax)
+
+        fig.subplots_adjust(bottom=0.25)
+
+        ax_q1 = fig.add_axes([0.2, 0.1, 0.65, 0.03])
+        configuration_slider = Slider(
+            ax=ax_q1,
+            label='q1 [rad]',
+            valmin=bound[0],
+            valmax=bound[1],
+            valinit=bound[0],
+            valstep=0.001
+        )
+
+        def update(val):
             ax.clear()  # Clear the previous frame
-            plt.grid(True)
-            plt.axis('equal')
             ax.set_xlim(minmax[0]-1, minmax[1]+1)  # Reset x-axis limits
             ax.set_ylim(minmax[2]-1, minmax[3]+1)  # Reset y-axis limits
-            q = [q_values[frame]]  # Change the joint angles in each frame
+            ax.grid(True)
+            ax.set_aspect('equal')
             for Link in self.links:
                 jointCoor = []
                 for Joint in Link.jointName:
-                    output = self.fk(q, Joint, mode)
-                    D = output.A @ posFilter
-                    E = np.array([[D[0][0]], [D[1][0]]])
-                    jointCoor.append(E)
-                self.__plotLink(jointCoor)
+                    temp = self.fk([configuration_slider.val], Joint, mode).A @ np.array([[0], [0], [0], [1]])
+                    jointCoor.append(np.array([[temp[0][0]], [temp[1][0]]]))
+                self.__plotLink(jointCoor,ax)
 
-        # Create the animation
-        frames = len(q_values)
-        animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
+        configuration_slider.on_changed(update)
+        plt.show()
+
+    def __teach5(self, mode:str = "positive"):
+        fig, ax = plt.subplots()
+        ax.grid(True)
+        ax.set_aspect('equal')
+        minmax = self.__minmax5()
+        C_space, q1_space, q2_space = self.__boundary5(0.01)
+        q1_bound = (min(q1_space),max(q1_space))
+        q2_bound = (min(q2_space),max(q2_space))
+        mode = "positive"
+        
+        ax.set_xlim(minmax[0]-1, minmax[1]+1)  # set x-axis limits
+        ax.set_ylim(minmax[2]-1, minmax[3]+1)  # set y-axis limits 
+
+        for Link in self.links:
+            jointCoor = []
+            for Joint in Link.jointName:
+                temp = self.fk([q1_space[0], q2_space[0]], Joint, mode).A @ np.array([[0], [0], [0], [1]])
+                jointCoor.append(np.array([[temp[0][0]], [temp[1][0]]]))
+            self.__plotLink(jointCoor,ax)
+
+        fig.subplots_adjust(bottom=0.25)
+
+        ax_q1 = fig.add_axes([0.2, 0.1, 0.65, 0.03])
+        q1_slider = Slider(
+            ax=ax_q1,
+            label='q1 [rad]',
+            valmin=q1_bound[0],
+            valmax=q1_bound[1],
+            valinit=q1_space[0],
+            valstep=0.001
+        )
+
+        ax_q2 = fig.add_axes([0.2, 0.05, 0.65, 0.03])
+        q2_slider = Slider(
+            ax=ax_q2,
+            label='q2 [rad]',
+            valmin=q2_bound[0],
+            valmax=q2_bound[1],
+            valinit=q2_space[0],
+            valstep=0.001
+        )
+        
+        def update(val):
+            if self.__is_fk5_available([q1_slider.val, q2_slider.val]):
+                ax.clear()  # Clear the previous frame
+                ax.set_xlim(minmax[0]-1, minmax[1]+1)  # Reset x-axis limits
+                ax.set_ylim(minmax[2]-1, minmax[3]+1)  # Reset y-axis limits
+                ax.grid(True)
+                ax.set_aspect('equal')
+                for Link in self.links:
+                    jointCoor = []
+                    for Joint in Link.jointName:
+                        temp = self.fk([q1_slider.val, q2_slider.val], Joint, mode).A @ np.array([[0], [0], [0], [1]])
+                        jointCoor.append(np.array([[temp[0][0]], [temp[1][0]]]))
+                    self.__plotLink(jointCoor,ax)
+
+        q1_slider.on_changed(update)
+        q2_slider.on_changed(update)
+
         plt.show()
         
     def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
-        if self.nlinks == 4:
-            return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
-        if self.nlinks == 5:
-            return self.__animationik5(q_init,taskspace_goal,joint_output, mode, tol_ik, res)
-    
-    def P_control_ik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+        q_start, mode_flag_start = self.ik(q_init,joint_output, mode, tol_ik, method = 'geometrical' )
+        q_goal, mode_flag_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
+        if mode_flag_start == mode_flag_goal:
+            if self.nlinks == 4:
+                return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
+            if self.nlinks == 5:
+                return self.__animationik5(q_init,taskspace_goal,joint_output, mode, tol_ik, res)
+        else:
+            raise ValueError('different mode between start and goal')
+
+
+    def P_control_ik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
-        q = self.ik(init,joint_output, mode, tol_ik, method = 'geometrical' )
-        q_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
-        error = q - q_goal
+        q, mode_flag             = self.ik(init,joint_output, mode, tol_ik, method = 'geometrical' )
+        q_goal, mode_flag_goal   = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
+        error = q[0] - q_goal[0]
         while abs(error) > tol:
-            error = q - q_goal
+            error = q[0] - q_goal[0]
             v = (-error) * kp
             
-            q = q + (v*dt)
+            q[0] = q[0] + (v*dt)
             
-            traj_q.append(q)
+            traj_q.append(q[0])
         
         traj_q = np.array(traj_q)
         return traj_q
     
-    def __animationik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float):
+    def __animationik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
-        minmax = self.minmax4(mode)
+        minmax = self.__minmax4()
         path = self.P_control_ik4(dt,tol,kp,init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
         
@@ -645,15 +739,15 @@ class closedLoopMani():
             plt.axis('equal')
             ax.set_xlim(minmax[0]-2,minmax[1]+2)  # Reset x-axis limits in 
             ax.set_ylim(minmax[2]-2,minmax[3]+2)  # Reset y-axis limits in
-            q = [path[frame][0]]  # Change the joint angles in each frame
+            q = [path[frame]]  # Change the joint angles in each frame
             for Link in self.links:
                 jointCoor = []
                 for Joint in Link.jointName:
-                    output = self.fk(q, Joint, mode)
+                    output = self.fk(q, Joint, mode='positive')
                     D = output.A @ posFilter
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)
-                self.__plotLink(jointCoor)
+                self.__plotLink(jointCoor,ax)
             if frame == len(path) - 1:
                 animation.event_source.stop()
 
@@ -669,7 +763,6 @@ class closedLoopMani():
         
         posFilter = np.array([[0],[0],[0],[1]])     
         minx,maxx,miny,maxy = 0,0,0,0
-        joint = []
         for order in range(len(traj_q)):
             for Link in self.links:
                 for Joint in Link.jointName:
@@ -714,7 +807,7 @@ class closedLoopMani():
                     D = output.A @ posFilter
                     E = np.array([[D[0][0]], [D[1][0]]])
                     jointCoor.append(E)
-                self.__plotLink(jointCoor)
+                self.__plotLink(jointCoor,ax)
                 
             if frame == len(traj_q) - 1:
                 animation.event_source.stop()  # Stop the animation
@@ -727,7 +820,7 @@ class closedLoopMani():
     def cost_intersection5(self, q1:float, q2:float):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1)],[self.j1_pos[1][0] + self.l2*np.sin(q1)]])
         R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2)],[self.j2_pos[1][0] + self.l3*np.sin(q2)]])
-        if self.is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
+        if self.__is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
             cost = 1
         else: # Not Intersected
             cost = 1000000 
@@ -806,9 +899,12 @@ class closedLoopMani():
         return None
         
     def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
-        Cspace_reshaped, q1_space, q2_space = self.boundary5()
-        q_start = np.array(self.ik(start, outputJoint, mode, 0.05, method = 'geometrical'))
-        q_goal = np.array(self.ik(goal, outputJoint, mode, 0.05, method = 'geometrical'))
+        Cspace_reshaped, q1_space, q2_space = self.__boundary5()
+        q_start,mode_flag_start = self.ik(start, outputJoint, mode, 0.01, method = 'geometrical')
+        q_goal,mode_flag_goal = self.ik(goal, outputJoint, mode, 0.01, method = 'geometrical')
+        
+        q_start = np.array(q_start)
+        q_goal = np.array(q_goal)
         
         start_index = (np.argmin(np.abs(q1_space - q_start[0])), np.argmin(np.abs(q2_space - q_start[1])))
         goal_index = (np.argmin(np.abs(q1_space - q_goal[0])), np.argmin(np.abs(q2_space - q_goal[1])))
@@ -821,9 +917,4 @@ class closedLoopMani():
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
 
         return path_indices
-
-
-
-    
-
         

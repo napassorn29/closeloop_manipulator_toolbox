@@ -85,7 +85,7 @@ define close-loop kinematic chain that using link object to generated property o
 - #### *teach (mode) --> Animation of forward kinematics by bar linkage and the user can adjust desired input angle by sliding slide bar*
   - mode(str): positive (Convex Solution), negative (Concave Solution)
 
-- #### *animationik(dt, tol, kp, taskspace_init, taskspace_goal, joint_output, mode, tol_ik) --> Animation of inverse kinematic by bar linkage*:
+- #### *animationik(dt, tol, kp, taskspace_init, taskspace_goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
   Animation plot of inverse kinematics, which is a continuous loop for visualizing the possible paths that can reach the desired position.
   - dt(float): a small change in the independent variable t (time).
   - tol(float): minimum tolerance (error) that occurs in the position control process and user can accept that error.
@@ -95,6 +95,7 @@ define close-loop kinematic chain that using link object to generated property o
   - joint_output(str): Name of joint that the user wants to know the position.
   - mode(str): positive (Convex Solution), negative (Concave Solution)
   - tol_ik(float): tolerance or error that the user can accept.
+  - res(float): rotate resolution of input joint.
 
   
   
@@ -128,10 +129,11 @@ result:
 
 #### 4-bar linkage plot
 ```python
-
+Robot.plot([0.7589975036567245],'positive')
 ```
 result:
 
+![Figure_1](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/e61dd20c-9b4d-44ec-b20b-37b8d6e12944)
 
 
 #### Teach
@@ -149,7 +151,7 @@ print(bound)
 ```
 result :
 ```python
-
+(-1.318116071652818, 1.318116071652818)
 ```
 
 #### Inverse kinematic of Robot

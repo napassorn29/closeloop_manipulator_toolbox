@@ -83,11 +83,6 @@ define close-loop kinematic chain that using link object to generated property o
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
   - q(float): The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angles.
   - mode(str): positive (Convex Solution), negative (Concave Solution)
-    
-- #### *animationfk (frequency, mode) --> Animation of forward kinematics by bar linkage*:
-  Animation plot of forward kinematics, which is a continuous loop of all possible angles.
-  - frequency(float): Resolution of angles used in plotting.
-  - mode(str): positive (Convex Solution), negative (Concave Solution)
  
 - #### *teach (mode) --> Animation of forward kinematics by bar linkage and the user can adjust desired input angle by sliding slide bar*
   - mode(str): positive (Convex Solution), negative (Concave Solution)
@@ -134,14 +129,6 @@ result:
    0         0         0         1
 ```
 
-#### Teach
-```python
-Robot.teach('positive')
-```
-result:
-
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/c6a4276d-d811-432b-91d3-8fa062801bbc
-
 #### 4-bar linkage plot
 ```python
 Robot.plot([np.pi/4],'positive')
@@ -151,15 +138,13 @@ result:
 
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/6d469813-4516-411a-b2ab-60d2642e9c97)
 
-
-#### Animation forward kinematics
+#### Teach
 ```python
-Robot.animationfk(100,'negative')
-plt.show()
+Robot.teach('positive')
 ```
 result:
 
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/d46b1291-26a2-421a-8c5e-b448202e304a
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/c6a4276d-d811-432b-91d3-8fa062801bbc
 
 #### Boundary of Robot
 ```python

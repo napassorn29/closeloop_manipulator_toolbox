@@ -139,7 +139,7 @@ result :
 ```python
 
 ```
-*output*
+result:
 
 ###  **Closed loop kinematic chain of 5 Bar linkage**
 #### Set closed loop manipulator of Robot
@@ -158,7 +158,7 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 output = Robot.fk([np.pi/2,np.pi/3],'d','positive')
 print(output)
 ```
-resilt :
+result:
 ```python
    0.3832   -0.9237    0         2.832     
    0.9237    0.3832    0         6.825
@@ -170,7 +170,7 @@ resilt :
 ```python
 Robot.plot_boundary5() 
 ```
-result :
+result:
 
 
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/b53ae8ad-3d7f-4590-a67b-3fe736eaa924)
@@ -184,4 +184,4 @@ result :
 ```python
 
 ```
-*output*
+result:

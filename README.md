@@ -246,3 +246,6 @@ Robot.animationik(0.01, 0.005, 5, np.array([[4.714],[-0.5257]]), np.array([[2.83
 plt.show()
 ```
 result:
+
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/e986d031-46c5-4e56-9b19-408bfa3b09ec
+

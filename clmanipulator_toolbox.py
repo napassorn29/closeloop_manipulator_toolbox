@@ -7,6 +7,7 @@ import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import minimize
 
+# define each link of the manipulator
 class link():
     def __init__(self, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray):
         # Name: Check if 'Name' is string
@@ -48,7 +49,7 @@ class link():
                 raise ValueError('Invalid joint position. Initial joint position must be (0, 0)')
         else:
             raise ValueError('Invalid joint position. Joint position must be numpy.ndarray.')
-    
+
     def is_connectable(self, other_link)->bool:
     # Check if 2 Links have the same joints
         connectability = False
@@ -114,6 +115,7 @@ class link():
 
         return rotation_matrix @ j_pos
 
+# define complete manipulator with closed-loop structure from links
 class closedLoopMani():
     def __init__(self, Links: link):
         self.nlinks = len(Links)
@@ -122,10 +124,13 @@ class closedLoopMani():
         for Link in Links:
             self.links_type.append(Link.type)
         
+        # check number of fixed link 
         if self.links_type.count('fixed') != 1:
             raise ValueError('Closed-loop manipulator require only 1 fixed link.')
         
+        # 4-bar linkage
         if self.nlinks == 4:
+            # check number of input link
             if self.links_type.count('input') != 1:
                 raise ValueError(f'4-Bar manipulator require 1 input link. Current number of input link: {self.links_type.count("input")}')
             
@@ -152,6 +157,7 @@ class closedLoopMani():
             self.l3 = self.intermediate_link_1.jointDist(self.j2,self.j4)
             self.l4 = self.intermediate_link_2.jointDist(self.j3,self.j4)
 
+        # 5-bar linkage
         elif self.nlinks == 5:
             if self.links_type.count('input') != 2:
                 raise ValueError(f'5-Bar manipulator require 2 input link. Current number of input link: {self.links_type.count("input")}')
@@ -189,19 +195,24 @@ class closedLoopMani():
                 Joints.append(joint)
         self.joints = list(set(Joints))
 
+    # forward kinematics of the manipulator
     def fk(self, q, outputJoint, mode = "positive"):
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
+        # forward kinematics of 4-bar linkage
         if self.nlinks == 4:
             if len(q) != 1:
                 raise ValueError(f'4-Bar manipulator require 1 joint configuration.')
             return self.__fk4(q, outputJoint, mode)
+        
+        # forward kinematics of 5-bar linkage
         if self.nlinks == 5:
             if len(q) != 2:
                 raise ValueError(f'5-Bar manipulator require 2 joint configurations.')
             return self.__fk5(q, outputJoint, mode)
-            
+    
+    # forward kinematics of 4-bar linkage
     def __fk4(self, q, outputJoint, mode = "positive"):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
         R2 = np.array([[self.j2_pos[0][0]],[self.j2_pos[1][0]]])
@@ -226,6 +237,7 @@ class closedLoopMani():
 
             return self.__HMpose(base_joint_pos + rotated_relative_position,angle)
     
+    # forward kinematics of 5-bar linkage
     def __fk5(self, q, outputJoint, mode = "positive"):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q[0])],[self.j1_pos[1][0] + self.l2*np.sin(q[0])]])
         R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q[1])],[self.j2_pos[1][0] + self.l3*np.sin(q[1])]])
@@ -252,6 +264,7 @@ class closedLoopMani():
             rotated_relative_position = target_link.rotateJoint(outputJoint,angle) - target_link.rotateJoint(base_joint,angle)
             return self.__HMpose(base_joint_pos + rotated_relative_position,angle)
 
+    # check if 2 links are connectable (have the same joint) 
     def __circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int), mode: str):
         # Center of circle 1
         h1 = o1[0][0]
@@ -285,6 +298,7 @@ class closedLoopMani():
 
         return np.array([[x],[y]]) 
     
+    # check if 2 links are connectable (have the same joint)  
     def is_circle_intersection(self, o1: np.ndarray, o2: np.ndarray, r1: (float, int), r2: (float, int)):
         # Center of circle 1
         h1 = o1[0][0]

@@ -247,5 +247,8 @@ plt.show()
 ```
 result:
 
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/e986d031-46c5-4e56-9b19-408bfa3b09ec
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a0aaf070-1c0d-465a-8595-6b736fb746f3
+
+
+
 

@@ -122,13 +122,19 @@ q = [2.1267784793154387]
 mode = "positive"
 output = Robot.fk(q,'d',mode)
 ```
-result :
+result:
 ```python
    0.9571   -0.2898    0         8.417     
    0.2898    0.9571    0         2.548     
    0         0         1         0
    0         0         0         1
 ```
+#### Animation forward kinematics
+```python
+Robot.animationfk(100,'negative')
+plt.show()
+```
+result:
 
 #### Boundary of Robot
 ```python
@@ -145,7 +151,7 @@ result :
 
 ```
 
-#### Animation 
+#### Animation inverse kinematics 
 ```python
 
 ```

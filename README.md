@@ -94,7 +94,7 @@ define close-loop kinematic chain that using link object to generated property o
   - dt(float): small change in the independent variable t (time).
   - tol(float): minimun tolerance (error) that occurs in the position control process and user can accept that error.
   - kp(float): proportional gain value in PID controller.
-  - q_init(list): initial angle of input joint.
+  - q_init(list): initial position of input joint.
   - taskspace_goal(list): desired position in x-y plane.
   - joint_output(str): Name of joint that user wants to know the position.
   - mode(str): positive (Convex Solution), negative (Concave Solution)

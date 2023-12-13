@@ -105,10 +105,10 @@ define close-loop kinematic chain that using link object to generated property o
 #### Set closed loop manipulator of Robot
 ```python
 # Define links properties in link class
-L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
-L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
-L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
-L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
+L1 = link('A','fixed',np.array(['a','b']),np.array([[0,7],[0,0]]))
+L2 = link('B','input',np.array(['a','e','g']),np.array([[0,6,3],[0,0,1]]))
+L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
+L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,4],[0,0]]))
 
 # Constuct the robot
 Robot = closedLoopMani([L1,L2,L4,L5])
@@ -116,25 +116,24 @@ Robot = closedLoopMani([L1,L2,L4,L5])
 
 #### Forward kinematic of Robot
 ```python
-output = Robot.fk([2.1267784793154387],'d','positive')
+output = Robot.fk([0.7589975036567245],'d','positive')
 print(output)
 ```
 result:
 ```python
-   0.9571   -0.2898    0         8.417     
-   0.2898    0.9571    0         2.548     
+   0.9112   -0.412     0         8.337     
+   0.412     0.9112    0         3.77
    0         0         1         0
    0         0         0         1
 ```
 
 #### 4-bar linkage plot
 ```python
-Robot.plot([np.pi/4],'positive')
-plt.show()
+
 ```
 result:
 
-![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/6d469813-4516-411a-b2ab-60d2642e9c97)
+
 
 #### Teach
 ```python
@@ -142,22 +141,22 @@ Robot.teach('positive')
 ```
 result:
 
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/e9175afe-e05a-480e-9c1a-9446bb9409fb
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/ce9b74ec-4f89-4f6c-a380-4d75c58c889c
 
 #### Boundary of Robot
 ```python
-bound = Robot.boundary4()
+bound = Robot.boundary()
 print(bound)
 ```
 result :
 ```python
-(-3.141592653589793, 3.141592653589793)
+
 ```
 
 #### Inverse kinematic of Robot
 ```python
 # Defind Taskspace 
-desired_position = np.array([[10],[3]])
+desired_position = np.array([[6.091],[3.895]])
 
 # Inverse Kinematic using Geometrical Method to find configuration space
 q_sol_geo = Robot.ik(desired_position,'d',mode='up',method='geometrical')
@@ -169,7 +168,8 @@ print("Numerical result: ",q_sol_num)
 ```
 result:
 ```python
-Geometrical result:  ([1.5707963267948966], 'positive')
+Geometrical result:  ([1.1551963634025209], 'positive')
+Numerical result:  (array([1.15522984]), 'positive')
 ```
 
 #### Animation inverse kinematics 

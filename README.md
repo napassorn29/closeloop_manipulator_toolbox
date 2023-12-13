@@ -116,7 +116,7 @@ Robot = closedLoopMani([L1,L2,L4,L5])
 
 #### Forward kinematic of Robot
 ```python
-output = Robot.fk([0.7589975036567245],'d','positive')
+output = Robot.fk(q=[0.7589975036567245],outputJoint='d',mode='positive')
 print(output)
 ```
 result:
@@ -129,7 +129,7 @@ result:
 
 #### 4-bar linkage plot
 ```python
-Robot.plot([0.7589975036567245],'positive')
+Robot.plot(q=[0.7589975036567245],mode='positive')
 ```
 result:
 
@@ -138,7 +138,7 @@ result:
 
 #### Teach
 ```python
-Robot.teach('positive')
+Robot.teach(mode='positive')
 ```
 result:
 
@@ -175,9 +175,14 @@ Numerical result:  (array([1.15522984]), 'positive')
 
 #### Animation inverse kinematics 
 ```python
-
+Robot.animationik(dt=0.01,tol=0.1,kp=1.0,taskspace_init=np.array([[8.21],[3.81]]),taskspace_goal=np.array([[6.81],[3.99]]),joint_output='d',mode='up',tol_ik=0.1,res=0.01)
+plt.show()
 ```
 result:
+
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/1e5318f0-2567-45fa-8b02-6477448947db
+
+
 
 ###  **Closed loop kinematic chain of 5 Bar linkage**
 #### Set closed loop manipulator of Robot
@@ -195,7 +200,7 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 
 #### Forward kinematic of Robot
 ```python
-output = Robot.fk([np.pi/2,np.pi/3],'d','positive')
+output = Robot.fk(q=[np.pi/2,np.pi/3],outputJoint='d',mode='positive')
 print(output)
 ```
 result:
@@ -208,7 +213,7 @@ result:
 
 #### 5-bar linkage plot
 ```python
-Robot.plot([np.pi/4+np.pi/2,np.pi/3],'positive')
+Robot.plot(q=[np.pi/4+np.pi/2,np.pi/3],mode='positive')
 plt.show()
 ```
 result:
@@ -218,7 +223,7 @@ result:
 
 #### Teach
 ```python
-Robot.teach('negative')
+Robot.teach(mode='negative')
 ```
 result:
 
@@ -235,7 +240,21 @@ result: the white area in the figure represent available configuration space and
 
 #### Inverse kinematic of Robot
 ```python
+# Defind Taskspace 
+desire_position = np.array([[2.83],[6.82]])
 
+# Inverse Kinematic using Geometrical Method to find configuration space
+q_sol_geo = Robot.ik(T_desired=desire_position,outputJoint='d',tol=0.2,method='geometrical')
+print("Geometrical result :",q_sol_geo)
+
+# Inverse Kinematic using Numerical Method to find configuration space
+q_sol_num = Robot.ik(T_desired=desire_position,outputJoint='d',tol=0.2,method='numerical')
+print("Numerical result :",q_sol_num)
+```
+result:
+```python
+Geometrical result : ([1.5725021852414964, 1.046177731542845], 'positive')
+Numerical result : ([1.6, 1.0], 'positive')
 ```
 
 #### Animation inverse kinematics

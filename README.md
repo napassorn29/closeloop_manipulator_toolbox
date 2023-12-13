@@ -55,9 +55,9 @@ define close-loop kinematic chain that using link object to generated property o
 **Method**
 - #### *fk(q, outputJoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
-    - q: The angle of the input joint that user wants to rotate (list type in 5-bar linkage).
-    - outputJoint: Name of joint that user wants to know the position.
-    - mode: positive (Convex Solution), negative (Concave Solution)
+    - q(float type in 4-bar linkage, list type in 5-bar linkage): The angle of the input joint that user wants to rotate.
+    - outputJoint(str): Name of joint that user wants to know the position.
+    - mode(str): positive (Convex Solution), negative (Concave Solution)
 
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a984276a-fa37-43e7-b6f3-30dbc726ed75)
 
@@ -66,30 +66,40 @@ define close-loop kinematic chain that using link object to generated property o
 
 - #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
-  - res: rotate resolution of input joint.
+  - res(float): rotate resolution of input joint.
       
 - #### *ik(T_desired, outputJoint, mode, tol, method) --> The configuration angle of the input joint*:
   Return The angle of the input joint when determining the desired output joint position in the radian unit.
-  - T_desired: list of output joint position that desired in x-y plane
-  - method: numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
-  - mode: In numerical method can choose positive, negative.
-          In geometrical method can choose positive (++), negative (--), (+-), (-+)
+  - T_desired(list): list of output joint position that desired in x-y coordinated
+  - method(str): numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
+  - mode(str): In numerical method can choose positive, negative.
+               In geometrical method can choose positive (++), negative (--), (+-), (-+)
     
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)
   
-  - tol: tolerance or error that the user can accept.
+  - tol(float): tolerance or error that the user can accept.
     
 - #### *plot(q, mode) --> Plot bar linkage*:
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
-  - q: The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angle.
-  - mode: positive (Convex Solution), negative (Concave Solution)
+  - q(float): The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angle.
+  - mode(str): positive (Convex Solution), negative (Concave Solution)
     
 - #### *animationfk (frequency, mode) --> Animation of forward kinematic by bar linkage*:
   Animation plot of forward kinematics, which is a continuous loop of all possible angles.
-  - frequency: Resolution of angles used in plotting.
-  - mode: positive (Convex Solution), negative (Concave Solution)
+  - frequency(float): Resolution of angles used in plotting.
+  - mode(str): positive (Convex Solution), negative (Concave Solution)
 
-- #### *animationik(dt, tol, kp, start, goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
+- #### *animationik(dt, tol, kp, q_init, taskspace_goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
+  Animation plot of inverse kinematics, which is a continuous loop for visualize possible path that can reach desired position.
+  - dt(float): small change in the independent variable t (time).
+  - tol(float): minimun tolerance (error) that occurs in the position control process and user can accept that error.
+  - kp(float): proportional gain value in PID controller.
+  - q_init(list): initial angle of input joint.
+  - taskspace_goal(list): desired position in x-y plane.
+  - joint_output(str): Name of joint that user wants to know the position.
+  - mode(str): positive (Convex Solution), negative (Concave Solution)
+  - tol_ik(float): tolerance or error that the user can accept.
+  - res(float): rotate resolution of input joint.
 
   
   

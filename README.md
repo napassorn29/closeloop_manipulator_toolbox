@@ -175,7 +175,7 @@ Numerical result:  (array([1.15522984]), 'positive')
 
 #### Animation inverse kinematics 
 ```python
-Robot.animationik(dt=0.01,tol=0.1,kp=1.0,taskspace_init=np.array([[8.21],[3.81]]),taskspace_goal=np.array([[6.81],[3.99]]),joint_output='d',mode='up',tol_ik=0.1,res=0.01)
+Robot.animationik(dt=0.01, tol=0.1, kp=1.0, taskspace_init=np.array([[8.21],[3.81]]), taskspace_goal=np.array([[6.81],[3.99]]), joint_output='d', mode='up', tol_ik=0.1, res=0.01)
 plt.show()
 ```
 result:

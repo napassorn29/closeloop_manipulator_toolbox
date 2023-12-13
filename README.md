@@ -112,11 +112,22 @@ q = [2.1267784793154387]
 mode = "positive"
 output = Robot.fk(q,'d',mode)
 ```
+result :
+```python
+   0.9571   -0.2898    0         8.417     
+   0.2898    0.9571    0         2.548     
+   0         0         1         0
+   0         0         0         1
+```
 
 #### Boundary of Robot
 ```python
 bound = Robot.boundary4()
 print(bound)
+```
+result :
+```python
+(-3.141592653589793, 3.141592653589793)
 ```
 
 #### Inverse kinematic of Robot
@@ -147,11 +158,19 @@ Robot = closedLoopMani([L1,L2,L3,L4,L5])
 output = Robot.fk([np.pi/2,np.pi/3],'d','positive')
 print(output)
 ```
+resilt :
+```python
+   0.3832   -0.9237    0         2.832     
+   0.9237    0.3832    0         6.825
+   0         0         1         0
+   0         0         0         1
+```
 
 #### Boundary of Robot
 ```python
-
+Robot.plot_boundary5() 
 ```
+result:
 
 #### Inverse kinematic of Robot
 ```python

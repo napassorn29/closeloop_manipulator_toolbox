@@ -70,7 +70,7 @@ define close-loop kinematic chain that using link object to generated property o
       
 - #### *ik(desired_position, outputJoint, mode, method) --> The configuration angle and mode of the input joint*:
   Return The configuration angle and mode of the input joint when determining the desired output joint position in the radian unit
-  - desired_position(list): list of output joint positions that are desired in x-y coordinated
+  - desired_position(list, np.ndarray): list of output joint positions that are desired in x-y coordinated
   - method(str): numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
   - mode(str): In numerical method can choose up or down.
                In geometrical method can choose up (++), down (--), (+-), (-+)
@@ -79,7 +79,7 @@ define close-loop kinematic chain that using link object to generated property o
     
 - #### *plot(q, mode) --> Plot bar linkage*:
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
-  - q(float): The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angles.
+  - q(list): The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angles.
   - mode(str): positive (Convex Solution), negative (Concave Solution)
  
 - #### *teach (mode) --> Animation of forward kinematics by bar linkage and the user can adjust desired input angle by sliding slide bar*
@@ -87,12 +87,12 @@ define close-loop kinematic chain that using link object to generated property o
 
 - #### *animationik(dt, tol, kp, q_init, taskspace_goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
   Animation plot of inverse kinematics, which is a continuous loop for visualizing the possible paths that can reach the desired position.
-  - dt(float): small change in the independent variable t (time).
-  - tol(float): minimun tolerance (error) that occurs in the position control process and user can accept that error.
+  - dt(float): a small change in the independent variable t (time).
+  - tol(float): minimum tolerance (error) that occurs in the position control process and user can accept that error.
   - kp(float): proportional gain value in PID controller.
   - q_init(list): initial position of input joint.
-  - taskspace_goal(list): desired position in x-y plane.
-  - joint_output(str): Name of joint that user wants to know the position.
+  - taskspace_goal(np.ndarray): desired position in x-y plane.
+  - joint_output(str): Name of joint that the user wants to know the position.
   - mode(str): positive (Convex Solution), negative (Concave Solution)
   - tol_ik(float): tolerance or error that the user can accept.
   - res(float): rotate resolution of input joint.

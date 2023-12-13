@@ -131,6 +131,14 @@ result:
    0         0         0         1
 ```
 
+#### Teach
+```python
+Robot.teach('positive')
+```
+result:
+
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/818610ac-8845-4875-974b-8cb824d7c53d
+
 #### 4-bar linkage plot
 ```python
 Robot.plot([np.pi/4],'positive')

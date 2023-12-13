@@ -30,7 +30,7 @@ from spatialmath import SE3
 ```
 ## **Function**
 ### **clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
-define link property such as joint name, joint position etc. to construct close-loop kinematic chain class
+define link property such as joint name, joint position etc. to construct the link for close-loop kinematic chain class
 
 
 **Variable**
@@ -55,7 +55,7 @@ define close-loop kinematic chain that using link object to generated property o
 **Method**
 - #### *fk(q, outputJoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
-    - q: The angle of the input joint that user wants to rotate.
+    - q: The angle of the input joint that user wants to rotate (list type in 5-bar linkage).
     - outputJoint: Name of joint that user wants to know the position.
     - mode: Positive (Convex Solution), Negative (Concave Solution)
 
@@ -66,19 +66,19 @@ define close-loop kinematic chain that using link object to generated property o
 
 - #### *plot_boundary5(res) --> figure of avaliable workspace in input domain*:
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
-  - res: resolution of q of input joint.
+  - res: rotate resolution of input joint.
       
-- #### *ik(T_desired, outputJoint, mode, tol, method) --> The angle of the input joint*:
+- #### *ik(T_desired, outputJoint, mode, tol, method) --> The configuration angle of the input joint*:
   Return The angle of the input joint when determining the desired output joint position in the radian unit.
-  - T_desired: Position of desired output joint
-  - method: numerical (Choose q that matched minimize error), geometrical (Use geometric and trigonometry to find q)
+  - T_desired: list of output joint position that desired in x-y plane
+  - method: numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
   - mode: In numerical method can choose positive, negative.
           In geometrical method can choose positive (++), negative (--), (+-), (-+)
     
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)
   
   - tol: tolerance or error that the user can accept.
-  - 
+    
 - #### *plot(q, mode) --> Plot bar linkage*:
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
   - q: The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angle.

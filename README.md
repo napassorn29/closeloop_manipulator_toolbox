@@ -175,7 +175,7 @@ print("Numerical result: ",q_sol_num)
 ```
 result:
 ```python
-
+Geometrical result:  ([1.5707963267948966], 'positive')
 ```
 
 #### Animation inverse kinematics 

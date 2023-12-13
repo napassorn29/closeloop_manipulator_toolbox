@@ -108,11 +108,13 @@ define close-loop kinematic chain that using link object to generated property o
 ###  **Closed loop kinematic chain of 4 Bar linkage**
 #### Set closed loop manipulator of Robot
 ```python
+# Define links properties in link class
 L1 = link('A','fixed',np.array(['a','b']),np.array([[0,10],[0,0]]))
 L2 = link('B','input',np.array(['a','e','g']),np.array([[0,3,2],[0,0,1]]))
 L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,10],[0,0]]))
 L5 = link('E','intermediate',np.array(['b','d']),np.array([[0,3],[0,0]]))
 
+# Constuct the robot
 Robot = closedLoopMani([L1,L2,L4,L5])
 ```
 
@@ -173,12 +175,14 @@ result:
 ###  **Closed loop kinematic chain of 5 Bar linkage**
 #### Set closed loop manipulator of Robot
 ```python
+# Define links properties in link class
 L1 = link('A','fixed',np.array(['a','b']),np.array([[0,3],[0,0]]))
 L2 = link('B','input',np.array(['a','e','g']),np.array([[0,4,2],[0,0,1]]))
 L3 = link('C','input',np.array(['b','c','f']),np.array([[0,4,2],[0,0,-1]]))
 L4 = link('D','intermediate',np.array(['e','d']),np.array([[0,4],[0,0]]))
 L5 = link('E','intermediate',np.array(['c','d']),np.array([[0,4],[0,0]]))
 
+# Constuct the robot
 Robot = closedLoopMani([L1,L2,L3,L4,L5])
 ```
 

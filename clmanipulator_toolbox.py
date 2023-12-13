@@ -321,9 +321,9 @@ class closedLoopMani():
     
     def boundary(self, res = 0.01):
         if self.nlinks == 4:
-            return self.__boundary4(self)
+            return self.__boundary4()
         if self.nlinks == 5:
-            return self.__boundary5(self, res)
+            return self.__boundary5(res)
 
     def __boundary4(self):
         if self.l1+self.l2 < self.l3+self.l4:
@@ -345,7 +345,9 @@ class closedLoopMani():
         for q2 in range (int(2*np.pi/res)):
             CspaceRow = []
             for q1 in range (int(2*np.pi/res)):
-                if self.__is_fk5_available([q1,q2]): # Intersected
+                R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1*res)],[self.j1_pos[1][0] + self.l2*np.sin(q1*res)]])
+                R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2*res)],[self.j2_pos[1][0] + self.l3*np.sin(q2*res)]])
+                if self.__is_circle_intersection(R1, R2, self.l4, self.l5): # Intersected
                     CspaceRow.append(255)
                     q1_space.append(q1*res)
                     q2_space.append(q2*res)
@@ -471,8 +473,8 @@ class closedLoopMani():
             mode_flag = "negative"
     
         if tol >= min(final_error):
-                min_error_index = final_error.index(min(final_error))
-                return [q1_space[min_error_index], q2_space[min_error_index]], mode_flag
+            min_error_index = final_error.index(min(final_error))
+            return [q1_space[min_error_index], q2_space[min_error_index]], mode_flag
         else:
             raise ValueError(f'T_desired is out of workspace. Error reported: {min(final_error)}')
         
@@ -573,6 +575,7 @@ class closedLoopMani():
         axes.plot(x_sorted, y_sorted)
         
     def plot(self,q:list,mode:str):
+        fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
         for Link in self.links:
@@ -580,7 +583,8 @@ class closedLoopMani():
             for Joint in Link.jointName:
                 temp = self.fk(q,Joint,mode).A @ np.array([[0],[0],[0],[1]])
                 jointCoor.append(np.array([[temp[0][0]],[temp[1][0]]]))
-            self.__plotLink(jointCoor)
+            self.__plotLink(jointCoor, ax)
+        plt.show()
     
     def teach(self, mode:str = "positive"):
         if self.nlinks == 4:
@@ -694,67 +698,68 @@ class closedLoopMani():
 
         plt.show()
         
-    def animationik(self,dt:float, tol:float, kp:float, q_init:list,taskspace_goal:list,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
-        q_start, mode_flag_start = self.ik(q_init,joint_output, mode, tol_ik, method = 'geometrical' )
-        q_goal, mode_flag_goal = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
-        if mode_flag_start == mode_flag_goal:
-            if self.nlinks == 4:
-                return self.__animationik4(dt, tol, kp, q_init,taskspace_goal,joint_output, mode, tol_ik)
-            if self.nlinks == 5:
-                return self.__animationik5(q_init,taskspace_goal,joint_output, mode, tol_ik, res)
-        else:
-            raise ValueError('different mode between start and goal')
+    def animationik(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
+        if self.nlinks == 4:
+            return self.__animationik4(dt, tol, kp, taskspace_init,taskspace_goal,joint_output, mode, tol_ik)
+        if self.nlinks == 5:
+            return self.__animationik5(taskspace_init,taskspace_goal,joint_output, mode, tol_ik, res)
 
-
-    def P_control_ik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
+    def P_control_ik4(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
-        q, mode_flag             = self.ik(init,joint_output, mode, tol_ik, method = 'geometrical' )
+        q, mode_flag             = self.ik(taskspace_init,joint_output, mode, tol_ik, method = 'geometrical' )
         q_goal, mode_flag_goal   = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
         error = q[0] - q_goal[0]
+        flag = True
         while abs(error) > tol:
             error = q[0] - q_goal[0]
             v = (-error) * kp
-            
             q[0] = q[0] + (v*dt)
             
             traj_q.append(q[0])
+            flag = False
+        
+        if flag:
+            traj_q.append(q_goal[0])
         
         traj_q = np.array(traj_q)
-        return traj_q
+        return traj_q, mode_flag, mode_flag_goal
     
-    def __animationik4(self,dt:float, tol:float, kp:float, init:list,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
+    def __animationik4(self,dt:float, tol:float, kp:float, taskspace_init:list,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
         minmax = self.__minmax4()
-        path = self.P_control_ik4(dt,tol,kp,init,taskspace_goal,joint_output,mode,tol_ik)
+        path, mode_flag, mode_flag_goal = self.P_control_ik4(dt,tol,kp,taskspace_init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
-        
+
         ax.set_xlim(minmax[0]-2,minmax[1]+2)  # set x-axis limits 
-        ax.set_ylim(minmax[2]-2,minmax[3]+2)  # set y-axis limits 
+        ax.set_ylim(minmax[2]-2,minmax[3]+2)  # set y-axis limits
 
-        def update(frame):
-            ax.clear()  # Clear the previous frame
-            plt.grid(True)
-            plt.axis('equal')
-            ax.set_xlim(minmax[0]-2,minmax[1]+2)  # Reset x-axis limits in 
-            ax.set_ylim(minmax[2]-2,minmax[3]+2)  # Reset y-axis limits in
-            q = [path[frame]]  # Change the joint angles in each frame
-            for Link in self.links:
-                jointCoor = []
-                for Joint in Link.jointName:
-                    output = self.fk(q, Joint, mode='positive')
-                    D = output.A @ posFilter
-                    E = np.array([[D[0][0]], [D[1][0]]])
-                    jointCoor.append(E)
-                self.__plotLink(jointCoor,ax)
-            if frame == len(path) - 1:
-                animation.event_source.stop()
-
-        # Create the animation
-        frames = len(path)
-        animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
-        plt.show()
+        if mode_flag == mode_flag_goal: 
+            
+            def update(frame):
+                ax.clear()  # Clear the previous frame
+                plt.grid(True)
+                plt.axis('equal')
+                ax.set_xlim(minmax[0]-2,minmax[1]+2)  # Reset x-axis limits in 
+                ax.set_ylim(minmax[2]-2,minmax[3]+2)  # Reset y-axis limits in
+                q = [path[frame]]  # Change the joint angles in each frame
+                for Link in self.links:
+                    jointCoor = []
+                    for Joint in Link.jointName:
+                        output = self.fk(q, Joint, mode_flag)
+                        D = output.A @ posFilter
+                        E = np.array([[D[0][0]], [D[1][0]]])
+                        jointCoor.append(E)
+                    self.__plotLink(jointCoor, ax)
+                if frame == len(path) - 1:
+                    animation.event_source.stop()
+            # Create the animation
+            frames = len(path)
+            animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
+            plt.show()
+        else:
+            raise ValueError(f'The initial mode is not equal to the goal mode') 
         
     def path_ik5(self, start: list, goal: list, joint_output: str, mode: str, tol_ik: float, res:float = 0.01):
         traj_q = self.plan_path(start, goal, joint_output, mode, res * 100)
@@ -917,4 +922,3 @@ class closedLoopMani():
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
 
         return path_indices
-        

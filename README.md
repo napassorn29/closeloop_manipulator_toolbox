@@ -144,7 +144,7 @@ Robot.teach('positive')
 ```
 result:
 
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/c6a4276d-d811-432b-91d3-8fa062801bbc
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/e9175afe-e05a-480e-9c1a-9446bb9409fb
 
 #### Boundary of Robot
 ```python
@@ -217,11 +217,14 @@ result:
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/f320b95c-70fc-44e1-a007-0c237ea1552e)
 
 
-#### Animation forward kinematics
+#### Teach
 ```python
-
+Robot.teach('negative')
 ```
 result:
+
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/9167d179-346a-4dcc-983d-deb17723177d
+
 #### Boundary of Robot
 ```python
 Robot.plot_boundary5() 

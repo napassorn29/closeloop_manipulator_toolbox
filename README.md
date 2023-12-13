@@ -129,6 +129,17 @@ result:
    0         0         1         0
    0         0         0         1
 ```
+
+#### 4-bar linkage plot
+```python
+Robot.plot([np.pi/4+np.pi/2,np.pi/3],'positive')
+plt.show()
+```
+result:
+
+![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/6d469813-4516-411a-b2ab-60d2642e9c97)
+
+
 #### Animation forward kinematics
 ```python
 Robot.animationfk(100,'negative')

@@ -55,7 +55,7 @@ define close-loop kinematic chain that using link object to generated property o
 **Method**
 - #### *fk(q, outputJoint, mode) --> Homogeneous matrix of outputjoint*:
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
-    - q(float type in 4-bar linkage, list type in 5-bar linkage): The angle of the input joint that user wants to rotate.
+    - q(list or np.ndarray): The angle of the input joint that user wants to rotate.
     - outputJoint(str): Name of joint that user wants to know the position.
     - mode(str): positive (Convex Solution), negative (Concave Solution)
 

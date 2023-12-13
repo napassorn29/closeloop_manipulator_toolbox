@@ -170,7 +170,7 @@ result:
 ```python
 Robot.plot_boundary5() 
 ```
-result: the white area in the figure represent avaliable configuration space and black area represent the unavaliable configuration space 
+result: the white area in the figure represent avaliable configuration space and black area represent the unavaliable configuration space.
 
 
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/b53ae8ad-3d7f-4590-a67b-3fe736eaa924)

@@ -375,7 +375,7 @@ class closedLoopMani():
     def ik(self, T_desired : (list,np.ndarray), outputJoint, mode = 'positive', tol = 0.01, method = 'geometrical'):
         if self.nlinks == 4:
             if method == 'numerical':
-                return self.__ik4_num(T_desired, outputJoint, tol)
+                return self.__ik4_num(T_desired, outputJoint, mode, tol)
             elif method == 'geometrical':
                 return self.__ik4_geo(T_desired, outputJoint, mode, tol)
             else: 
@@ -397,16 +397,13 @@ class closedLoopMani():
             raise ValueError(f'Output joint does not exist.')
         
         boundary = self.boundary4()
-        initial_guess = [boundary[0]]
 
         def _objective(q):
-            T_actual = self.fk(q,outputJoint)
-            return np.linalg.norm(T_actual.A[0:2,3] - T_desired)
+            T_actual = self.fk(q, outputJoint, mode).A @ np.array([[0],[0],[0],[1]])
+
+            return np.linalg.norm(np.array([[T_actual[0][0]],[T_actual[1][0]]]) - T_desired)
         
-        q_min = boundary[0]
-        q_max = boundary[1]
-        for init_guess in initial_guess:
-            result = minimize(_objective,init_guess, bounds=[(q_min, q_max) for _ in initial_guess])
+        result = minimize(_objective,boundary[0], bounds = [boundary])
         
         if tol >= _objective(result.x) :
             return result.x[0]
@@ -435,7 +432,13 @@ class closedLoopMani():
         if not(outputJoint in self.joints):
             raise ValueError(f'Output joint does not exist.')
         
-        C_space, q1_space, q2_space = self.boundary5()
+        temp = tol
+        i = 0
+        while (temp < 1):
+            temp *= 10
+            i += 1
+        
+        C_space, q1_space, q2_space = self.boundary5(10**(-i))
         error = []
 
         for q1, q2 in zip(q1_space,q2_space):
@@ -490,29 +493,17 @@ class closedLoopMani():
         return (q1, q2)
     
     def minmax4(self, mode:str):
-        posFilter = np.array([[0],[0],[0],[1]])
         bound = self.boundary4()
         q_value = np.linspace(bound[0],bound[1],100)
-        minx,maxx,miny,maxy = 0,0,0,0
-        joint = []
-        for q in range(len(q_value)):
+        x = []; y = []
+        for q in q_value:
             for Link in self.links:
                 for Joint in Link.jointName:
-                    q_find = [q_value[q]]
-                    output = self.fk(q_find,Joint,mode)
-                    D = output.A @ posFilter
-                    if D[0][0] < minx:
-                        minx = D[0][0]
-                    elif D[0][0] > maxx:
-                        maxx = D[0][0]
-                    if D[1][0] < miny:
-                        miny = D[1][0]
-                    elif D[1][0] > maxy:
-                        maxy = D[1][0]
-                    else:
-                        continue
-                # joint = joint.append(Joint)
-        minmax = [minx,maxx,miny,maxy]
+                    output = self.fk([q],Joint,mode)
+                    D = output.A @ np.array([[0],[0],[0],[1]])
+                    x.append(D[0][0])
+                    y.append(D[1][0])
+        minmax = [min(x),max(x),min(y),max(y)]
         return minmax
          
     def __plotLink(self,jointCoordinates:list):
@@ -816,6 +807,7 @@ class closedLoopMani():
         path_indices = self.a_star(start, goal, outputJoint, mode,res)
 
         return path_indices
+
 
 
     

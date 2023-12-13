@@ -120,11 +120,7 @@ Robot = closedLoopMani([L1,L2,L4,L5])
 
 #### Forward kinematic of Robot
 ```python
-# Define Configuration space
-q = [2.1267784793154387]
-# Define mode
-mode = "positive"
-output = Robot.fk(q,'d',mode)
+output = Robot.fk([2.1267784793154387],'d','positive')
 print(output)
 ```
 result:

@@ -30,18 +30,18 @@ from spatialmath import SE3
 ```
 ## **Function**
 ### **clmanipulator_toolbox.link(Object, Name: str, Type: str, Joint_name: (list,np.ndarray), Joint_pos: np.ndarray)**
-define link property such as joint name, joint position etc. to construct the link for close-loop kinematic chain class
+define link properties such as joint name, joint position etc. to construct the link for close-loop kinematic chain class
 
 
 **Variable**
 - Name: Name of link.
 - Type: Type of link (fixed, input, and intermediate).
 - Joint_name: Name of the joint in each link.
-- Joint_pos: Position of each joint compared with the first joint in the link.
+- Joint_pos: Each joint's position is compared with the link's first joint.
 
 **Method**
 - #### *is_connectable(other_link) --> bool*:
-  Checking connection between self and other link class by using joint name
+  Checking the connection between self and other link class by using joint name
 - #### *connect(other_link)* --> connected_name, connected_position, connect_dist_from_ref :
   Return connection property between self and other link
 
@@ -68,9 +68,9 @@ define close-loop kinematic chain that using link object to generated property o
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
   - res(float): rotate resolution of input joint.
       
-- #### *ik(T_desired, outputJoint, mode, tol, method) --> The configuration angle of the input joint*:
-  Return The angle of the input joint when determining the desired output joint position in the radian unit.
-  - T_desired(list): list of output joint position that desired in x-y coordinated
+- #### *ik(T_desired, outputJoint, mode, tol, method) --> The configuration angle and mode of the input joint*:
+  Return The configuration angle and mode of the input joint when determining the desired output joint position in the radian unit
+  - T_desired(list): list of output joint positions that desired in x-y coordinated
   - method(str): numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
   - mode(str): In numerical method can choose positive, negative.
                In geometrical method can choose positive (++), negative (--), (+-), (-+)

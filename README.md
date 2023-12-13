@@ -57,7 +57,7 @@ define close-loop kinematic chain that using link object to generated property o
   Return Homogeneous matrix that describe position and orientation of the outputjoint that return from forward kinematic of the close-loop kinematic by define the rotation of the input joint (Note: require 1 input for 4-bar linkage and 2 input for 5-bar linkage)
     - q: The angle of the input joint that user wants to rotate (list type in 5-bar linkage).
     - outputJoint: Name of joint that user wants to know the position.
-    - mode: Positive (Convex Solution), Negative (Concave Solution)
+    - mode: positive (Convex Solution), negative (Concave Solution)
 
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/a984276a-fa37-43e7-b6f3-30dbc726ed75)
 
@@ -82,12 +82,12 @@ define close-loop kinematic chain that using link object to generated property o
 - #### *plot(q, mode) --> Plot bar linkage*:
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image
   - q: The input angle of the input joint (between Fixlink and Inputlink), the 4-bar linkage has 1 input angle and the 5-bar linkage has 2 input angle.
-  - mode: Positive (Convex Solution), Negative (Concave Solution)
+  - mode: positive (Convex Solution), negative (Concave Solution)
     
 - #### *animationfk (frequency, mode) --> Animation of forward kinematic by bar linkage*:
   Animation plot of forward kinematics, which is a continuous loop of all possible angles.
   - frequency: Resolution of angles used in plotting.
-  - mode: Positive (Convex Solution), Negative (Concave Solution)
+  - mode: positive (Convex Solution), negative (Concave Solution)
 
 - #### *animationik(dt, tol, kp, start, goal, joint_output, mode, tol_ik, res) --> Animation of inverse kinematic by bar linkage*:
 
@@ -170,7 +170,7 @@ result:
 ```python
 Robot.plot_boundary5() 
 ```
-result: the white area in the figure represent avaliable configuration space and black area represent the unavaliable configuration space 
+result: the white area in the figure represent avaliable configuration space and black area represent the unavaliable configuration space.
 
 
 ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122667170/b53ae8ad-3d7f-4590-a67b-3fe736eaa924)

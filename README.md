@@ -166,6 +166,19 @@ result :
 
 #### Inverse kinematic of Robot
 ```python
+# Defind Taskspace 
+desired_position = np.array([[10],[3]])
+
+# Inverse Kinematic using Geometrical Method to find configuration space
+q_sol_geo = Robot.ik(desired_position,'d',mode='up',method='geometrical')
+print("Geometrical result: ",q_sol_geo)
+
+# Inverse Kinematic using Numerical Method to find configuration space
+q_sol_num = Robot.ik(desired_position,'d',mode='up',method='numerical')
+print("Numerical result: ",q_sol_num)
+```
+result:
+```python
 
 ```
 

@@ -68,16 +68,14 @@ define close-loop kinematic chain that using link object to generated property o
   Return figure that represent avaliable pair of input that the close-loop kinematic chain can approach and not break the chain.
   - res(float): rotate resolution of input joint.
       
-- #### *ik(T_desired, outputJoint, mode, tol, method) --> The configuration angle and mode of the input joint*:
+- #### *ik(desired_position, outputJoint, mode, method) --> The configuration angle and mode of the input joint*:
   Return The configuration angle and mode of the input joint when determining the desired output joint position in the radian unit
-  - T_desired(list): list of output joint positions that desired in x-y coordinated
+  - desired_position(list): list of output joint positions that are desired in x-y coordinated
   - method(str): numerical (Choose q that matched the minimize error), geometrical (Use geometric and trigonometry to find q)
-  - mode(str): In numerical method can choose positive, negative.
-               In geometrical method can choose positive (++), negative (--), (+-), (-+)
+  - mode(str): In numerical method can choose up or down.
+               In geometrical method can choose up (++), down (--), (+-), (-+)
     
   ![image](https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/96826b99-8b0e-4434-8a67-0c1d53d54b69)
-  
-  - tol(float): tolerance or error that the user can accept.
     
 - #### *plot(q, mode) --> Plot bar linkage*:
   Plot bar linkage of the input bar and joint including the angle at the user defined in order to display the image

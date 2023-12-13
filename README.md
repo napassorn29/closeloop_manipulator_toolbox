@@ -136,6 +136,8 @@ plt.show()
 ```
 result:
 
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/44f049fd-63d9-48d1-a462-3c9d80bdbc56
+
 #### Boundary of Robot
 ```python
 bound = Robot.boundary4()
@@ -181,7 +183,11 @@ result:
    0         0         1         0
    0         0         0         1
 ```
+#### Animation forward kinematics
+```python
 
+```
+result:
 #### Boundary of Robot
 ```python
 Robot.plot_boundary5() 
@@ -196,7 +202,7 @@ result: the white area in the figure represent avaliable configuration space and
 
 ```
 
-#### Animation 
+#### Animation inverse kinematics
 ```python
 
 ```

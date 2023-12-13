@@ -136,7 +136,7 @@ plt.show()
 ```
 result:
 
-https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/44f049fd-63d9-48d1-a462-3c9d80bdbc56
+https://github.com/napassorn29/closeloop_manipulator_toolbox/assets/122891621/d46b1291-26a2-421a-8c5e-b448202e304a
 
 #### Boundary of Robot
 ```python

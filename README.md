@@ -97,7 +97,7 @@ define close-loop kinematic chain that using link object to generated property o
   - tol_ik(float): tolerance or error that the user can accept.
   - res(float): rotate resolution of input joint.
 
-  - #### *path(dt, tol, kp, taskspace_init, taskspace_goal, joint_output, mode, tol_ik, res) --> list of possible path*
+- #### *path(dt, tol, kp, taskspace_init, taskspace_goal, joint_output, mode, tol_ik, res) --> list of possible path*
   - dt(float): a small change in the independent variable t (time).
   - tol(float): minimum tolerance (error) that occurs in the position control process and user can accept that error.
   - kp(float): proportional gain value in PID controller.

@@ -1,10 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from spatialmath import SE3
 import heapq
-import math
-from matplotlib.widgets import Slider, Button
-import matplotlib.animation as animation
+from spatialmath import SE3
+from matplotlib.widgets import Slider
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import minimize
 
@@ -698,13 +696,21 @@ class closedLoopMani():
 
         plt.show()
         
-    def animationik(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float, res:float = 0.01):
+    def animationik(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float, res:float):
         if self.nlinks == 4:
             return self.__animationik4(dt, tol, kp, taskspace_init,taskspace_goal,joint_output, mode, tol_ik)
         if self.nlinks == 5:
             return self.__animationik5(taskspace_init,taskspace_goal,joint_output, mode, tol_ik, res)
 
-    def P_control_ik4(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
+    def path(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float, res:float):
+        if self.nlinks == 4:
+            traj_q4, mode_flag, mode_flag_goal = self.__P_control_ik4(dt, tol, kp, taskspace_init,taskspace_goal,joint_output, mode, tol_ik)
+            return traj_q4
+        if self.nlinks == 5:
+            traj_q5,q1_values,q2_values,minmax = self.__path_ik5(taskspace_init,taskspace_goal,joint_output, mode, res)
+            return traj_q5
+
+    def __P_control_ik4(self,dt:float, tol:float, kp:float, taskspace_init:np.ndarray,taskspace_goal:np.ndarray,joint_output:str, mode:str, tol_ik:float):
         traj_q = []
         q, mode_flag             = self.ik(taskspace_init,joint_output, mode, tol_ik, method = 'geometrical' )
         q_goal, mode_flag_goal   = self.ik(taskspace_goal,joint_output, mode, tol_ik, method = 'geometrical' )
@@ -729,7 +735,7 @@ class closedLoopMani():
         plt.grid(True)
         plt.axis('equal')
         minmax = self.__minmax4()
-        path, mode_flag, mode_flag_goal = self.P_control_ik4(dt,tol,kp,taskspace_init,taskspace_goal,joint_output,mode,tol_ik)
+        path, mode_flag, mode_flag_goal = self.__P_control_ik4(dt,tol,kp,taskspace_init,taskspace_goal,joint_output,mode,tol_ik)
         posFilter = np.array([[0], [0], [0], [1]])
 
         ax.set_xlim(minmax[0]-2,minmax[1]+2)  # set x-axis limits 
@@ -761,8 +767,8 @@ class closedLoopMani():
         else:
             raise ValueError(f'The initial mode is not equal to the goal mode') 
         
-    def path_ik5(self, start: list, goal: list, joint_output: str, mode: str, tol_ik: float, res:float = 0.01):
-        traj_q = self.plan_path(start, goal, joint_output, mode, res * 100)
+    def __path_ik5(self, start: list, goal: list, joint_output: str, mode: str, tol_ik: float, res:float = 0.01):
+        traj_q = self.__plan_path(start, goal, joint_output, mode, res * 100)
         q1_values = [point[0] for point in traj_q]
         q2_values = [point[1] for point in traj_q]
         
@@ -791,7 +797,7 @@ class closedLoopMani():
         fig, ax = plt.subplots()
         plt.grid(True)
         plt.axis('equal')
-        traj_q,q1_values,q2_values,minmax = self.path_ik5(start,goal,joint_output, mode, tol_ik)
+        traj_q,q1_values,q2_values,minmax = self.__path_ik5(start,goal,joint_output, mode, tol_ik)
         frames = len(q1_values)
         posFilter = np.array([[0], [0], [0], [1]]) 
         ax.set_xlim(minmax[0]-2, minmax[1]+2) 
@@ -822,7 +828,7 @@ class closedLoopMani():
         animation = FuncAnimation(fig, update, frames=frames, interval=50, blit=False)
         plt.show()
         
-    def cost_intersection5(self, q1:float, q2:float):
+    def __cost_intersection5(self, q1:float, q2:float):
         R1 = np.array([[self.j1_pos[0][0] + self.l2*np.cos(q1)],[self.j1_pos[1][0] + self.l2*np.sin(q1)]])
         R2 = np.array([[self.j2_pos[0][0] + self.l3*np.cos(q2)],[self.j2_pos[1][0] + self.l3*np.sin(q2)]])
         if self.__is_circle_intersection(R1, R2, self.l4, self.l5) == True: # Intersected
@@ -832,10 +838,10 @@ class closedLoopMani():
             
         return cost
     
-    def grid_heuristic(self, start:list, goal:list):
+    def __grid_heuristic(self, start:list, goal:list):
         return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
     
-    def grid_neighbors(self, node:list, res:float):
+    def __grid_neighbors(self, node:list, res:float):
         neighbors = []
         x, y = node
         multiplier = 100
@@ -857,14 +863,14 @@ class closedLoopMani():
                 neighbors.append((neighbor0,neighbor1))
         return neighbors
     
-    def a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):
+    def __a_star(self, start: list, goal: list, outputJoint: str, mode: str, res: float):
         def make_node(state, parent=None, cost=0, heuristic=0):
             return (tuple(state), parent, cost, heuristic)
 
         open_set = []
         closed_set = set()
 
-        heuristic_fn = self.grid_heuristic(start, goal)
+        heuristic_fn = self.__grid_heuristic(start, goal)
         start_node = make_node(start, cost=0, heuristic=heuristic_fn)
 
         heapq.heappush(open_set, (0, start_node))
@@ -886,14 +892,14 @@ class closedLoopMani():
 
             closed_set.add(tuple(current_node[0]))  # Convert to tuple before adding to set
 
-            for neighbor in self.grid_neighbors(list(current_node[0]), res):  # Convert to list for the grid_neighbors call
+            for neighbor in self.__grid_neighbors(list(current_node[0]), res):  # Convert to list for the grid_neighbors call
                 if tuple(neighbor) in closed_set:
                     continue
-                cost_next = self.cost_intersection5(current_node[0][0],current_node[0][1])
+                cost_next = self.__cost_intersection5(current_node[0][0],current_node[0][1])
                 cost = current_node[2] + cost_next
                 # cost = current_node[2] + self.cost_intersection5(*current_node[0], *neighbor)
                 # print("current_node : ",current_node[0])
-                heuristic_fn = self.grid_heuristic(neighbor, goal)
+                heuristic_fn = self.__grid_heuristic(neighbor, goal)
                 new_node = make_node(neighbor, parent=current_node, cost=cost, heuristic=heuristic_fn)
 
                 if all(tuple(neighbor) != node[0] for _, node in open_set):
@@ -903,7 +909,7 @@ class closedLoopMani():
 
         return None
         
-    def plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
+    def __plan_path(self, start:list, goal:list, outputJoint:str, mode:str,res:float):
         Cspace_reshaped, q1_space, q2_space = self.__boundary5()
         q_start,mode_flag_start = self.ik(start, outputJoint, mode, 0.01, method = 'geometrical')
         q_goal,mode_flag_goal = self.ik(goal, outputJoint, mode, 0.01, method = 'geometrical')
@@ -919,6 +925,6 @@ class closedLoopMani():
         start = [round(q1_space[start_index[0]],num_round)*multiplier, round(q2_space[start_index[1]],num_round)*multiplier]
         goal = [round(q1_space[goal_index[0]],num_round)*multiplier, round(q2_space[goal_index[1]],num_round)*multiplier]
         
-        path_indices = self.a_star(start, goal, outputJoint, mode,res)
+        path_indices = self.__a_star(start, goal, outputJoint, mode,res)
 
         return path_indices

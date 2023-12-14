@@ -41,3 +41,6 @@ print('Inverse Kinematic Result: ',result, mode_flag)
 print(Robot.fk(result,outputJoint, mode_flag))
 
 Robot.animationik(0.01, 0.01, 1, np.array([[5.227],[3.586]]), np.array([[8.223],[3.808]]),'d','up', 0.5, 0.1)
+
+path = Robot.path(0.01, 0.01, 1, np.array([[5.227],[3.586]]), np.array([[8.223],[3.808]]),'d', 'up', 0.5, 0.1)
+print(path)
